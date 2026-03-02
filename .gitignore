@@ -1,0 +1,18 @@
+# Python
+backend/venv/
+backend/.env
+**/__pycache__/
+**/*.pyc
+backend/.pytest_cache/
+backend/.day4-complete
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+frontend/out/
+frontend/.vercel/
+
+# OS
+.DS_Store
+Thumbs.db
