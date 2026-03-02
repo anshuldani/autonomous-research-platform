@@ -3,8 +3,9 @@
 import { useState, useCallback, useRef } from "react";
 import type { Message, ResearchResult, ResearchStatus } from "@/lib/types";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000";
+// Always call the Next.js proxy route — it forwards to the Python backend.
+// In dev this is /api/research on localhost:3000.
+const API_ROUTE = "/api/research";
 
 function makeId() {
   return Math.random().toString(36).slice(2, 10);
@@ -43,7 +44,7 @@ export function useResearch() {
     abortRef.current = new AbortController();
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/research`, {
+      const response = await fetch(API_ROUTE, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
