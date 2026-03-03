@@ -5,11 +5,18 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageItem } from "@/components/message-item";
 import type { Message } from "@/lib/types";
 
+const EXAMPLES = [
+  "CRISPR applications in medicine",
+  "Impact of microplastics on ocean ecosystems",
+  "Breakthroughs in quantum computing",
+];
+
 interface Props {
   messages: Message[];
+  onSelectExample: (topic: string) => void;
 }
 
-export function MessageList({ messages }: Props) {
+export function MessageList({ messages, onSelectExample }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -27,24 +34,11 @@ export function MessageList({ messages }: Props) {
           it meets the quality threshold.
         </p>
         <div className="mt-2 flex flex-wrap justify-center gap-2">
-          {[
-            "CRISPR applications in medicine",
-            "Impact of microplastics on ocean ecosystems",
-            "Breakthroughs in quantum computing",
-          ].map((example) => (
+          {EXAMPLES.map((example) => (
             <button
               key={example}
               className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-              onClick={() => {
-                const input = document.getElementById(
-                  "research-input"
-                ) as HTMLTextAreaElement | null;
-                if (input) {
-                  input.value = example;
-                  input.dispatchEvent(new Event("input", { bubbles: true }));
-                  input.focus();
-                }
-              }}
+              onClick={() => onSelectExample(example)}
             >
               {example}
             </button>

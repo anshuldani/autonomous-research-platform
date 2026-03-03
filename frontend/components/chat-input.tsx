@@ -1,29 +1,29 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useCallback } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import type { ResearchStatus } from "@/lib/types";
 
 interface Props {
+  value: string;
+  onValueChange: (v: string) => void;
   status: ResearchStatus;
   onSend: (topic: string) => void;
   onStop: () => void;
 }
 
-export function ChatInput({ status, onSend, onStop }: Props) {
-  const [value, setValue] = useState("");
+export function ChatInput({ value, onValueChange, status, onSend, onStop }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
   const isResearching = status === "researching";
 
   const handleSend = useCallback(() => {
     const trimmed = value.trim();
     if (!trimmed || isResearching) return;
     onSend(trimmed);
-    setValue("");
+    onValueChange("");
     if (textareaRef.current) textareaRef.current.style.height = "auto";
-  }, [value, isResearching, onSend]);
+  }, [value, isResearching, onSend, onValueChange]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -32,9 +32,8 @@ export function ChatInput({ status, onSend, onStop }: Props) {
     }
   };
 
-  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setValue(e.target.value);
-    // Auto-grow textarea
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onValueChange(e.target.value);
     const el = e.target;
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
@@ -44,12 +43,11 @@ export function ChatInput({ status, onSend, onStop }: Props) {
     <div className="border-t border-border bg-background px-4 py-3">
       <div className="mx-auto flex max-w-3xl items-end gap-2">
         <Textarea
-          id="research-input"
           ref={textareaRef}
           rows={1}
           placeholder="Enter a research topic… (Shift+Enter for new line)"
           value={value}
-          onChange={handleInput}
+          onChange={handleChange}
           onKeyDown={handleKeyDown}
           disabled={isResearching}
           className="min-h-[44px] resize-none overflow-hidden rounded-xl text-sm"

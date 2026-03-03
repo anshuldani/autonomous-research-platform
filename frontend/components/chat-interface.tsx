@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useResearch } from "@/hooks/use-research";
 import { MessageList } from "@/components/message-list";
 import { ChatInput } from "@/components/chat-input";
@@ -9,6 +10,9 @@ import { Button } from "@/components/ui/button";
 export function ChatInterface() {
   const { messages, status, progressLines, sendTopic, stop, reset } =
     useResearch();
+
+  // Lifted so example-topic buttons in MessageList can set it via React state
+  const [inputValue, setInputValue] = useState("");
 
   return (
     <div className="flex h-screen flex-col bg-background">
@@ -28,7 +32,7 @@ export function ChatInterface() {
       </header>
 
       {/* Messages */}
-      <MessageList messages={messages} />
+      <MessageList messages={messages} onSelectExample={setInputValue} />
 
       {/* Live progress stream */}
       {status === "researching" && progressLines.length > 0 && (
@@ -38,7 +42,13 @@ export function ChatInterface() {
       )}
 
       {/* Input */}
-      <ChatInput status={status} onSend={sendTopic} onStop={stop} />
+      <ChatInput
+        value={inputValue}
+        onValueChange={setInputValue}
+        status={status}
+        onSend={sendTopic}
+        onStop={stop}
+      />
     </div>
   );
 }
