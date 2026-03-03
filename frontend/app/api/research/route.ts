@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Research can take 3-5 minutes — raise the route timeout to 10 minutes.
+// Without this Next.js kills the handler after 30 s, cutting the SSE stream.
+export const maxDuration = 600;
+export const dynamic = "force-dynamic";
+
 const BACKEND_URL =
   process.env.BACKEND_URL ?? "http://localhost:8000";
 
