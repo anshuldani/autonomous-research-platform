@@ -69,6 +69,10 @@ export function useResearch() {
 
         buffer += decoder.decode(value, { stream: true });
 
+        // Normalize CRLF → LF so we handle both \n\n and \r\n\r\n separators
+        // (sse-starlette v3 uses \r\n\r\n per the SSE spec)
+        buffer = buffer.replace(/\r\n/g, "\n");
+
         // SSE frames are separated by double newlines
         const frames = buffer.split("\n\n");
         buffer = frames.pop() ?? "";
