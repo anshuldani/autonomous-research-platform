@@ -3,8 +3,10 @@ backend/venv/
 backend/.env
 **/__pycache__/
 **/*.pyc
+**/*.pyo
 backend/.pytest_cache/
 backend/.day4-complete
+*.egg-info/
 
 # Node / Next.js
 frontend/node_modules/
@@ -12,7 +14,18 @@ frontend/.next/
 frontend/.env.local
 frontend/out/
 frontend/.vercel/
+frontend/tsconfig.tsbuildinfo
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Misc
+*.docx
+*.log
