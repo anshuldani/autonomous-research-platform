@@ -124,7 +124,7 @@ class ResearchTools:
             response = self.tavily.search(
                 query=query,
                 max_results=max_results,
-                search_depth="basic",
+                search_depth="advanced",
                 include_raw_content=False
             )
             

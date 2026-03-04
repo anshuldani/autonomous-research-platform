@@ -139,19 +139,24 @@ def smart_synthesis(state, is_improvement=False):
 
     new_context = "\n".join(context_parts) if context_parts else "No new context."
 
+    questions_text = "\n".join(f"{i+1}. {q}" for i, q in enumerate(state['research_questions']))
+
     if not is_improvement:
         prompt = f"""Write a comprehensive research report on: {state['topic']}
 
-Research findings:
+You MUST answer ALL of these research questions explicitly:
+{questions_text}
+
+Research findings from web sources:
 {new_context}
 
-Create a well-structured report (500+ words) with:
-- Clear introduction
-- Detailed key findings with SPECIFIC data (numbers, trial names, percentages)
-- Analysis of patterns
-- Conclusion
-
-Be thorough and include quantitative details. NO bullet points."""
+Requirements:
+- Minimum 600 words
+- Dedicate a section to each research question with specific evidence from the sources
+- Include statistics, numbers, study names, dates, and percentages wherever available
+- Structure: Introduction → one section per research question → Analysis → Conclusion
+- Flowing academic prose — no bullet points
+- Cite source titles inline when referencing specific facts"""
 
     else:
         weaknesses = state['current_critique']['quality_scores'].get('weaknesses', [])
@@ -160,32 +165,33 @@ Be thorough and include quantitative details. NO bullet points."""
         weakness_text = "\n".join(f"{i+1}. {w}" for i, w in enumerate(weaknesses[:3]))
         suggestion_text = "\n".join(f"{i+1}. {s}" for i, s in enumerate(suggestions[:3]))
 
-        prompt = f"""ENHANCE this research report by addressing specific weaknesses.
+        prompt = f"""Rewrite and improve this research report on: {state['topic']}
 
-ORIGINAL REPORT (Iteration {state['iteration']-1}):
+Research questions that MUST all be answered:
+{questions_text}
+
+PREVIOUS REPORT:
 {state['previous_summary']}
 
-IDENTIFIED WEAKNESSES:
+WEAKNESSES TO FIX:
 {weakness_text}
 
 SUGGESTIONS:
 {suggestion_text}
 
-NEW RESEARCH to address gaps:
+ADDITIONAL RESEARCH:
 {new_context}
 
-TASK: Write an IMPROVED version that:
-1. KEEPS all the good parts from the original
-2. ADDS the missing details identified in weaknesses
-3. INCORPORATES the new research findings
-4. FOLLOWS the suggestions (add specific numbers, trial names, comparisons)
-
-The improved report should be MORE DETAILED (600+ words) and address EVERY weakness.
-NO bullet points."""
+Write an improved version (700+ words) that:
+1. Answers every research question with specific evidence
+2. Fixes every weakness listed above
+3. Incorporates the additional research findings
+4. Adds specific numbers, statistics, and named studies
+No bullet points."""
 
     message = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=2000,
+        max_tokens=2500,
         temperature=0.3,
         messages=[{"role": "user", "content": prompt}]
     )
