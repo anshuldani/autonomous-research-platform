@@ -257,6 +257,40 @@ export function MessageList({ messages, onSelectExample }: Props) {
           </div>
         </section>
 
+        {/* Quality breakdown ───────────────────────────────────────── */}
+        <section className="border-t border-border/40 px-4 py-12">
+          <div className="mx-auto max-w-4xl">
+            <div className="mb-8 text-center">
+              <h2 className="text-lg font-bold tracking-tight text-foreground">Quality scoring</h2>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                Every report is evaluated across four dimensions before delivery
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { dim: "Depth",     pct: 90, desc: "Thoroughness of coverage and analysis" },
+                { dim: "Relevance", pct: 95, desc: "Alignment with your research questions" },
+                { dim: "Clarity",   pct: 85, desc: "Writing quality and structure" },
+                { dim: "Coverage",  pct: 88, desc: "Breadth across all sub-topics" },
+              ].map((d) => (
+                <div key={d.dim} className="rounded-xl border border-border/50 bg-card/50 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-foreground">{d.dim}</span>
+                    <span className="score-high text-xs font-bold tabular-nums">{d.pct}%</span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-primary/60 to-emerald-500/80"
+                      style={{ width: `${d.pct}%` }}
+                    />
+                  </div>
+                  <p className="mt-2 text-[11px] text-muted-foreground leading-snug">{d.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Tech stack ──────────────────────────────────────────────── */}
         <section className="border-t border-border/40 px-4 py-10">
           <div className="mx-auto max-w-4xl">
