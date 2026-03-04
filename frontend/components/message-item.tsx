@@ -44,14 +44,7 @@ export function MessageItem({ message }: Props) {
 
               {/* Report body */}
               <div className="px-5 pt-5 pb-5">
-                <div className="overflow-y-auto max-h-[55vh] pr-1">
-                  <div
-                    className="prose"
-                    dangerouslySetInnerHTML={{
-                      __html: `<p>${renderMarkdown(message.content)}</p>`,
-                    }}
-                  />
-                </div>
+                <div className="prose" dangerouslySetInnerHTML={{ __html: `<p>${renderMarkdown(message.content)}</p>` }} />
 
                 {message.result?.citations && (
                   <CitationList citations={message.result.citations} />

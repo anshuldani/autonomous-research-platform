@@ -14,9 +14,7 @@ export function ChatInterface() {
   const [inputValue, setInputValue] = useState("");
   const [mode, setMode] = useState<Mode>("research");
 
-  useEffect(() => {
-    if (status === "done") setMode("chat");
-  }, [status]);
+  // No auto-switch — user triggers chat mode manually via the CTA button
 
   const lastResearchMsg = [...messages]
     .reverse()
@@ -126,13 +124,34 @@ export function ChatInterface() {
       {mode === "research" ? (
         <div className="flex flex-1 flex-col overflow-hidden">
           <MessageList messages={messages} onSelectExample={setInputValue} />
-          <ChatInput
-            value={inputValue}
-            onValueChange={setInputValue}
-            status={status}
-            onSend={sendTopic}
-            onStop={stop}
-          />
+
+          {status === "done" && lastResearchMsg?.result?.research_id ? (
+            /* ── Research done — invite to chat ── */
+            <div className="border-t border-border/40 bg-card/30 px-4 py-4 animate-fade-in">
+              <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
+                <p className="text-sm text-muted-foreground">
+                  Report complete. Ask follow-up questions grounded in the research.
+                </p>
+                <button
+                  onClick={() => setMode("chat")}
+                  className="shrink-0 flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-[0_0_20px_oklch(0.65_0.22_270/25%)] transition-all hover:bg-primary/90 hover:shadow-[0_0_28px_oklch(0.65_0.22_270/35%)]"
+                >
+                  Chat about this
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <ChatInput
+              value={inputValue}
+              onValueChange={setInputValue}
+              status={status}
+              onSend={sendTopic}
+              onStop={stop}
+            />
+          )}
         </div>
       ) : (
         <div className="flex flex-1 flex-col overflow-hidden min-h-0 animate-fade-in">
