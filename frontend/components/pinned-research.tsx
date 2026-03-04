@@ -61,11 +61,24 @@ export function PinnedResearch({ topic, result }: Props) {
               {topic}
             </span>
 
-            {result.citations.length > 0 && (
-              <span className="hidden shrink-0 rounded-md bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline">
-                {result.citations.length} sources
-              </span>
-            )}
+            {/* Inline meta — iterations + sources */}
+            <div className="hidden shrink-0 items-center gap-1.5 sm:flex">
+              {result.quality_history.length > 0 && (
+                <span className="rounded-md bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  {result.quality_history.length} iter{result.quality_history.length !== 1 ? "s" : ""}
+                </span>
+              )}
+              {result.citations.length > 0 && (
+                <span className="rounded-md bg-muted/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  {result.citations.length} sources
+                </span>
+              )}
+              {collapsed && (
+                <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary/70 ring-1 ring-primary/20">
+                  Click to expand
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Collapse chevron */}
