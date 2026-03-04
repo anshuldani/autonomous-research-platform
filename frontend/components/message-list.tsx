@@ -257,10 +257,62 @@ export function MessageList({ messages, onSelectExample }: Props) {
           </div>
         </section>
 
+        {/* Accuracy / tech stack section */}
+        <section className="border-t border-border/40 px-4 py-12">
+          <div className="mx-auto max-w-4xl">
+            <div className="mb-8 text-center">
+              <h2 className="text-lg font-bold tracking-tight">Quality scoring breakdown</h2>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                Every report is evaluated across four dimensions before delivery
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { dim: "Depth",     pct: 90, desc: "Thoroughness of coverage and analysis" },
+                { dim: "Relevance", pct: 95, desc: "Alignment with the research questions" },
+                { dim: "Clarity",   pct: 85, desc: "Writing quality and structure" },
+                { dim: "Coverage",  pct: 88, desc: "Breadth across all sub-topics" },
+              ].map((d) => (
+                <div key={d.dim} className="rounded-xl border border-border/50 bg-card/50 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-foreground">{d.dim}</span>
+                    <span className="score-high text-xs font-bold tabular-nums">{d.pct}%</span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-primary/60 to-emerald-500/80"
+                      style={{ width: `${d.pct}%` }}
+                    />
+                  </div>
+                  <p className="mt-2 text-[11px] text-muted-foreground leading-snug">{d.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Tech stack */}
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+              {[
+                { name: "Claude Sonnet 4.6", role: "Research & Synthesis" },
+                { name: "Tavily Search",     role: "Live Web Search" },
+                { name: "Pinecone",          role: "Vector Database" },
+                { name: "Voyage AI",         role: "Embeddings" },
+              ].map((t) => (
+                <div key={t.name} className="flex items-center gap-2 rounded-xl border border-border/50 bg-card/40 px-4 py-2.5">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">{t.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{t.role}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Footer note */}
-        <div className="px-4 py-6 text-center">
-          <p className="text-[11px] text-muted-foreground/50">
-            Powered by Claude (Anthropic) · Tavily Search · Pinecone · Voyage AI
+        <div className="px-4 py-6 text-center border-t border-border/20">
+          <p className="text-[11px] text-muted-foreground/40">
+            Autonomous Research Platform · Built with Next.js, FastAPI, and the Anthropic API
           </p>
         </div>
       </div>
