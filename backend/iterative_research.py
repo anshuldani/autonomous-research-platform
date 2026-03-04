@@ -184,7 +184,7 @@ NO bullet points."""
 
     message = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=3500,
+        max_tokens=2000,
         temperature=0.3,
         messages=[{"role": "user", "content": prompt}]
     )
@@ -201,9 +201,17 @@ def run_initial_research(state):
     print(f"ITERATION 1: INITIAL RESEARCH")
     print('='*70 + '\n')
 
+    t0 = time.time()
     state = planning_agent(state)
+    print(f"⏱  planning:  {time.time()-t0:.1f}s")
+
+    t1 = time.time()
     state = research_with_delay(state, state['research_questions'])
+    print(f"⏱  search:    {time.time()-t1:.1f}s")
+
+    t2 = time.time()
     state = smart_synthesis(state, is_improvement=False)
+    print(f"⏱  synthesis: {time.time()-t2:.1f}s")
 
     return state
 
@@ -215,6 +223,7 @@ def critique_and_decide(state):
     print(f"CRITIQUE: Iteration {state['iteration']}")
     print('='*70 + '\n')
 
+    tc = time.time()
     critique = critique_research(
         topic=state['topic'],
         questions=state['research_questions'],
@@ -222,6 +231,7 @@ def critique_and_decide(state):
         sources_count=state['stored_chunks'],
         quality_threshold=state['quality_threshold']
     )
+    print(f"⏱  critique:  {time.time()-tc:.1f}s")
 
     state['current_critique'] = critique
     state['needs_more_research'] = critique['needs_improvement']
