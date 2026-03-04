@@ -12,7 +12,7 @@ export function FollowUpPanel({ researchId }: Props) {
   const { messages, status, send, stop, clear } = useChat(researchId);
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden min-h-0">
       {/* Section header */}
       <div className="flex items-center justify-between border-b border-border/40 px-5 py-2.5">
         <div className="flex items-center gap-2">
