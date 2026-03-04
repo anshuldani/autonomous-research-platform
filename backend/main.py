@@ -29,8 +29,7 @@ app = FastAPI(title="Autonomous Research Platform API", version="1.0.0")
 
 _CORS_ORIGINS = [
     "http://localhost:3000",  # local dev
-    # Production origins — add your Vercel URL here once deployed, e.g.:
-    # "https://your-app.vercel.app",
+    "https://autonomous-research-platform.vercel.app",  # production
 ]
 
 # Allow all origins in Railway preview deployments via env var
