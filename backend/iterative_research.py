@@ -11,6 +11,7 @@ import os
 from dotenv import load_dotenv
 import uuid
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from research_tools import ResearchTools
 from vector_store import VectorStore
@@ -49,38 +50,43 @@ class IterativeResearchState(TypedDict):
 
 
 def research_with_delay(state, questions):
-    """Research and store with indexing delay."""
+    """Research and store with indexing delay — searches run in parallel."""
 
     all_texts = []
     all_metadata = []
+    new_sources = []
 
-    for question in questions:
-        results = tools.search_web(query=question, max_results=2)
+    def fetch(question):
+        return question, tools.search_web(query=question, max_results=2)
 
-        for result in results:
-            all_texts.append(result['content'])
-            all_metadata.append({
-                'title': result['title'],
-                'url': result['url'],
-                'question': question,
-                'iteration': state['iteration']
-            })
-            # Collect source for citation
-            url = result.get('url', '')
-            if url:
-                score = result.get('score', 0.0)
-                existing = next(
-                    (s for s in state['sources'] if s['url'] == url), None
-                )
-                if existing:
-                    if score > existing['score']:
-                        existing['score'] = score
-                else:
-                    state['sources'].append({
+    with ThreadPoolExecutor(max_workers=len(questions)) as executor:
+        futures = {executor.submit(fetch, q): q for q in questions}
+        for future in as_completed(futures):
+            question, results = future.result()
+            for result in results:
+                all_texts.append(result['content'])
+                all_metadata.append({
+                    'title': result['title'],
+                    'url': result['url'],
+                    'question': question,
+                    'iteration': state['iteration']
+                })
+                url = result.get('url', '')
+                if url:
+                    new_sources.append({
                         'title': result.get('title', url),
                         'url': url,
-                        'score': score,
+                        'score': result.get('score', 0.0),
                     })
+
+    # Merge new sources into state (deduplicate by URL, keep highest score)
+    for src in new_sources:
+        existing = next((s for s in state['sources'] if s['url'] == src['url']), None)
+        if existing:
+            if src['score'] > existing['score']:
+                existing['score'] = src['score']
+        else:
+            state['sources'].append(src)
 
     if all_texts:
         print(f"💾 Storing {len(all_texts)} sources...")
@@ -92,8 +98,8 @@ def research_with_delay(state, questions):
         )
         state['stored_chunks'] += len(all_texts)
 
-        print("⏳ Indexing delay (3s)...")
-        time.sleep(3)
+        print("⏳ Indexing delay (1s)...")
+        time.sleep(1)
 
     return state
 
@@ -108,16 +114,26 @@ def smart_synthesis(state, is_improvement=False):
         new_questions = state['research_questions']
         print(f"📚 Retrieving context for {len(new_questions)} questions...")
 
-    context_parts = []
-
-    for question in new_questions:
+    def fetch_context(question):
         results = vector_store.hybrid_search(
             query=question,
             research_id=state['research_id'],
             top_k=2,
             alpha=0.7
         )
+        return question, results
 
+    # Run all hybrid searches in parallel, then reassemble in original order
+    question_results = {}
+    with ThreadPoolExecutor(max_workers=len(new_questions)) as executor:
+        futures = {executor.submit(fetch_context, q): q for q in new_questions}
+        for future in as_completed(futures):
+            question, results = future.result()
+            question_results[question] = results
+
+    context_parts = []
+    for question in new_questions:
+        results = question_results.get(question, [])
         if results:
             context_parts.append(f"\nQuestion: {question}\n")
             for r in results:
