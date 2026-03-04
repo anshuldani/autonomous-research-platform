@@ -13,11 +13,19 @@ export interface QualityRecord {
   };
 }
 
+export interface Citation {
+  title: string;
+  url: string;
+  score: number;
+}
+
 export interface ResearchResult {
   summary: string;
   quality_history: QualityRecord[];
   iterations: number;
   improvement_history: string[];
+  citations: Citation[];
+  research_id: string;
 }
 
 export interface Message {
@@ -35,3 +43,12 @@ export type ResearchStatus =
   | "researching"
   | "done"
   | "error";
+
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: Date;
+}
+
+export type ChatStatus = "idle" | "thinking" | "error";
