@@ -1,28 +1,28 @@
-# Core LLM and Agent Framework
-anthropic           # Claude API client
-langgraph           # Agent workflow orchestration
-langchain-anthropic  # LangChain integration
+# LLM
+anthropic==0.76.0
 
-# Environment Management
-python-dotenv        # Environment variables
+# Agent orchestration
+langgraph==1.0.7
 
-# Web Research
-tavily-python        # Web search API
+# Web search
+tavily-python==0.5.0
 
-# Vector Database & Embeddings (Day 3)
-pinecone-client      # Vector database
-voyageai             # State-of-the-art embeddings
-cohere              # Reranking for better retrieval
-numpy               # Vector operations
+# Vector DB + embeddings
+pinecone==8.0.1
+voyageai==0.3.7
 
-# Alternative embeddings (if needed)
-openai              # Alternative to Voyage AI
+# Reranking (optional — leave COHERE_API_KEY blank to skip)
+cohere==5.20.5
 
-# API Server
-fastapi            # REST API framework
-uvicorn             # ASGI server
-sse-starlette        # Server-Sent Events for streaming
+# API server
+fastapi==0.135.1
+uvicorn==0.41.0
+sse-starlette==3.3.2
+
+# Utilities
+python-dotenv==1.2.1
+numpy==2.4.2
 
 # Testing
-pytest               # Testing framework
-pytest-asyncio      # Async test support
+pytest==8.3.4
+pytest-asyncio==0.24.0

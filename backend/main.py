@@ -27,9 +27,20 @@ from iterative_research import run_iterative_research
 
 app = FastAPI(title="Autonomous Research Platform API", version="1.0.0")
 
+_CORS_ORIGINS = [
+    "http://localhost:3000",  # local dev
+    # Production origins — add your Vercel URL here once deployed, e.g.:
+    # "https://your-app.vercel.app",
+]
+
+# Allow all origins in Railway preview deployments via env var
+_extra_origin = os.getenv("CORS_ORIGIN")
+if _extra_origin:
+    _CORS_ORIGINS.append(_extra_origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
