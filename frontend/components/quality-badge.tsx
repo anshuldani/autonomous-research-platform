@@ -80,15 +80,15 @@ export function QualityBadge({ qualityHistory, iterations }: Props) {
           )}
         </div>
 
-        {/* Sub-scores */}
+        {/* Sub-scores — always visible, responsive grid */}
         {last.scores && (
           <>
-            <div className="h-12 w-px bg-border/60 hidden lg:block" />
-            <div className="hidden lg:flex flex-col gap-1.5">
+            <div className="h-12 w-px bg-border/60 hidden sm:block" />
+            <div className="flex flex-col gap-1.5">
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground/70 font-semibold">
                 Breakdown
               </span>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
                 {[
                   ["Depth",     last.scores.depth_score],
                   ["Relevance", last.scores.relevance_score],
