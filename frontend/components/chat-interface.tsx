@@ -135,12 +135,18 @@ export function ChatInterface() {
           />
         </div>
       ) : (
-        <div className="flex flex-1 flex-col overflow-hidden animate-fade-in">
+        <div className="flex flex-1 flex-col overflow-hidden min-h-0 animate-fade-in">
+          {/* Pinned card — shrink-0 so it never steals flex space from chat */}
           {lastResearchMsg?.result && (
-            <PinnedResearch topic={lastTopic} result={lastResearchMsg.result} />
+            <div className="shrink-0">
+              <PinnedResearch topic={lastTopic} result={lastResearchMsg.result} />
+            </div>
           )}
+          {/* Chat panel — flex-1 min-h-0 so it fills ALL remaining height */}
           {lastResearchMsg?.result?.research_id ? (
-            <FollowUpPanel researchId={lastResearchMsg.result.research_id} />
+            <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
+              <FollowUpPanel researchId={lastResearchMsg.result.research_id} />
+            </div>
           ) : (
             <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
               No research session found. Start a new research.
