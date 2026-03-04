@@ -50,7 +50,7 @@ export function MessageList({ messages, onSelectExample }: Props) {
 
   if (messages.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-8 px-4 text-center">
+      <div className="dot-grid flex flex-1 flex-col items-center justify-center gap-8 px-4 text-center">
         {/* Hero */}
         <div className="animate-fade-in-up space-y-3">
           {/* Icon orb */}
