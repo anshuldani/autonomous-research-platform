@@ -60,7 +60,7 @@ def get_vector_store():
 class ResearchRequest(BaseModel):
     topic: str = Field(..., min_length=3, description="Research topic to investigate")
     quality_threshold: float = Field(7.5, ge=1.0, le=10.0, description="Minimum quality score (1-10)")
-    max_iterations: int = Field(3, ge=1, le=5, description="Maximum improvement iterations")
+    max_iterations: int = Field(2, ge=1, le=5, description="Maximum improvement iterations")
 
 
 class ChatMessage(BaseModel):
