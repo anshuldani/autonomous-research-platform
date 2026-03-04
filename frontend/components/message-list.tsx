@@ -125,13 +125,19 @@ export function MessageList({ messages, onSelectExample }: Props) {
   }
 
   return (
-    <ScrollArea className="flex-1 px-4">
-      <div className="mx-auto flex max-w-3xl flex-col gap-5 py-8">
-        {messages.map((m) => (
-          <MessageItem key={m.id} message={m} />
-        ))}
-        <div ref={bottomRef} />
-      </div>
-    </ScrollArea>
+    <div className="relative flex-1 overflow-hidden">
+      {/* Top fade mask */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-8 bg-gradient-to-b from-background to-transparent" />
+      <ScrollArea className="h-full px-4">
+        <div className="mx-auto flex max-w-3xl flex-col gap-5 py-8">
+          {messages.map((m) => (
+            <MessageItem key={m.id} message={m} />
+          ))}
+          <div ref={bottomRef} />
+        </div>
+      </ScrollArea>
+      {/* Bottom fade mask */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-8 bg-gradient-to-t from-background to-transparent" />
+    </div>
   );
 }
