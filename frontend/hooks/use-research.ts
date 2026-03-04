@@ -14,7 +14,6 @@ function makeId() {
 export function useResearch() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<ResearchStatus>("idle");
-  const [progressLines, setProgressLines] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
   const sendTopic = useCallback(async (topic: string) => {
@@ -29,7 +28,6 @@ export function useResearch() {
     };
     setMessages((prev) => [...prev, userMsg]);
     setStatus("researching");
-    setProgressLines([]);
 
     // Placeholder assistant message (streaming into it)
     const assistantId = makeId();
@@ -93,15 +91,14 @@ export function useResearch() {
             continue;
           }
 
-          if (event.type === "progress") {
-            const line = event.message as string;
-            setProgressLines((prev) => [...prev, line]);
-          } else if (event.type === "result") {
+          if (event.type === "result") {
             const result: ResearchResult = {
               summary: event.summary as string,
               quality_history: event.quality_history as ResearchResult["quality_history"],
               iterations: event.iterations as number,
               improvement_history: event.improvement_history as string[],
+              citations: (event.sources as ResearchResult["citations"]) ?? [],
+              research_id: (event.research_id as string) ?? "",
             };
             setMessages((prev) =>
               prev.map((m) =>
@@ -130,23 +127,19 @@ export function useResearch() {
         )
       );
       setStatus("error");
-    } finally {
-      setProgressLines([]);
     }
   }, [status]);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
     setStatus("idle");
-    setProgressLines([]);
   }, []);
 
   const reset = useCallback(() => {
     abortRef.current?.abort();
     setMessages([]);
     setStatus("idle");
-    setProgressLines([]);
   }, []);
 
-  return { messages, status, progressLines, sendTopic, stop, reset };
+  return { messages, status, sendTopic, stop, reset };
 }
