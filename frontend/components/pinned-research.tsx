@@ -27,7 +27,8 @@ function renderMarkdown(text: string) {
 }
 
 export function PinnedResearch({ topic, result }: Props) {
-  const [collapsed, setCollapsed] = useState(false);
+  // Start collapsed so the chat panel is immediately visible
+  const [collapsed, setCollapsed] = useState(true);
   const [expanded, setExpanded] = useState(false);
 
   const finalScore =
@@ -83,7 +84,7 @@ export function PinnedResearch({ topic, result }: Props) {
 
         {/* Body */}
         {!collapsed && (
-          <div className="border-t border-border/40 px-5 pb-5 pt-4 overflow-y-auto max-h-[55vh] animate-fade-in">
+          <div className="border-t border-border/40 px-5 pb-5 pt-4 overflow-y-auto max-h-[30vh] animate-fade-in">
             <div
               className="prose text-sm"
               dangerouslySetInnerHTML={{
