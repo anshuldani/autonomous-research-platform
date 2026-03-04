@@ -14,9 +14,10 @@ This agent:
 from typing import Dict, List, TypedDict
 from anthropic import Anthropic
 import os
+import re
 from dotenv import load_dotenv
 import json
-from quality_scorer import score_research_quality
+from quality_scorer import score_research_quality, _extract_json
 
 load_dotenv()
 
@@ -102,15 +103,7 @@ Return ONLY a JSON object:
             }]
         )
         
-        response_text = message.content[0].text
-        
-        # Parse
-        if "```json" in response_text:
-            response_text = response_text.split("```json")[1].split("```")[0]
-        elif "```" in response_text:
-            response_text = response_text.split("```")[1].split("```")[0]
-        
-        improvements = json.loads(response_text.strip())
+        improvements = _extract_json(message.content[0].text)
         
         followup_questions = improvements.get('followup_questions', [])
         improvement_areas = improvements.get('improvement_areas', [])
