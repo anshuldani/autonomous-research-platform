@@ -11,11 +11,13 @@ Run with:
 
 import asyncio
 import json
+import os
 import queue
 import sys
 import threading
-from typing import AsyncGenerator
+from typing import AsyncGenerator, List, Optional
 
+from anthropic import Anthropic
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -33,12 +35,47 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+# Lazy singleton — initialized on first /api/chat request so the
+# research endpoint still works even if Pinecone keys are missing.
+_vector_store = None
+_vector_store_lock = threading.Lock()
+
+
+def get_vector_store():
+    global _vector_store
+    if _vector_store is None:
+        with _vector_store_lock:
+            if _vector_store is None:
+                from vector_store import VectorStore
+                _vector_store = VectorStore()
+    return _vector_store
+
+
+# ---------------------------------------------------------------------------
+# Pydantic models
+# ---------------------------------------------------------------------------
 
 class ResearchRequest(BaseModel):
     topic: str = Field(..., min_length=3, description="Research topic to investigate")
     quality_threshold: float = Field(7.5, ge=1.0, le=10.0, description="Minimum quality score (1-10)")
     max_iterations: int = Field(3, ge=1, le=5, description="Maximum improvement iterations")
 
+
+class ChatMessage(BaseModel):
+    role: str  # "user" | "assistant"
+    content: str
+
+
+class ChatRequest(BaseModel):
+    research_id: str
+    messages: List[ChatMessage]
+
+
+# ---------------------------------------------------------------------------
+# Research endpoint helpers
+# ---------------------------------------------------------------------------
 
 class QueueWriter:
     """Captures stdout and routes it to a queue as SSE progress events."""
@@ -55,10 +92,18 @@ class QueueWriter:
         pass
 
 
+# ---------------------------------------------------------------------------
+# Health
+# ---------------------------------------------------------------------------
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
+
+# ---------------------------------------------------------------------------
+# Research SSE endpoint
+# ---------------------------------------------------------------------------
 
 @app.post("/api/research")
 async def research_stream(request: ResearchRequest):
@@ -67,7 +112,8 @@ async def research_stream(request: ResearchRequest):
 
     SSE event types:
       - progress  {"type": "progress", "message": "..."}   live stdout lines
-      - result    {"type": "result", "summary": "...", "quality_history": [...], "iterations": N}
+      - result    {"type": "result", "summary": "...", "quality_history": [...], "iterations": N,
+                   "sources": [...], "research_id": "..."}
       - error     {"type": "error", "message": "..."}
     """
 
@@ -88,6 +134,8 @@ async def research_stream(request: ResearchRequest):
                 "quality_history": state["quality_history"],
                 "iterations": state["iteration"],
                 "improvement_history": state["improvement_history"],
+                "sources": state["sources"],
+                "research_id": state["research_id"],
             })
         except Exception as exc:
             msg_queue.put({"type": "error", "message": str(exc)})
@@ -114,3 +162,108 @@ async def research_stream(request: ResearchRequest):
         thread.join(timeout=5)
 
     return EventSourceResponse(generate())
+
+
+# ---------------------------------------------------------------------------
+# Chat follow-up endpoint
+# ---------------------------------------------------------------------------
+
+def retrieve_chat_context(research_id: str, query: str, top_k: int = 10) -> str:
+    """Embed query and retrieve top-k chunks from Pinecone for research_id."""
+    vs = get_vector_store()
+    results = vs.search_with_filters(
+        query=query,
+        research_id=research_id,
+        top_k=top_k,
+    )
+    if not results:
+        return ""
+    parts = []
+    for i, r in enumerate(results, 1):
+        title = r["metadata"].get("title", "Source")
+        url = r["metadata"].get("url", "")
+        text = r["text"]
+        source_line = f"[{i}] {title}" + (f" ({url})" if url else "")
+        parts.append(f"{source_line}\n{text}")
+    return "\n\n---\n\n".join(parts)
+
+
+async def generate_chat(request: ChatRequest) -> AsyncGenerator:
+    """Async generator that streams Claude tokens for a follow-up chat."""
+    if not request.messages:
+        yield {"data": json.dumps({"type": "error", "message": "No messages provided"})}
+        return
+
+    last_user_msg = next(
+        (m.content for m in reversed(request.messages) if m.role == "user"),
+        None,
+    )
+    if not last_user_msg:
+        yield {"data": json.dumps({"type": "error", "message": "No user message found"})}
+        return
+
+    # Retrieve RAG context in a thread (Pinecone calls are blocking)
+    try:
+        loop = asyncio.get_event_loop()
+        context = await loop.run_in_executor(
+            None,
+            retrieve_chat_context,
+            request.research_id,
+            last_user_msg,
+        )
+    except Exception as exc:
+        yield {"data": json.dumps({"type": "error", "message": f"Context retrieval failed: {exc}"})}
+        return
+
+    system_prompt = (
+        "You are a knowledgeable research assistant. "
+        "Answer the user's question based on the research context below. "
+        "Be concise, accurate, and cite specific details from the context when relevant. "
+        "If the context does not contain enough information, say so and provide your best general answer.\n\n"
+    )
+    if context:
+        system_prompt += f"## Research Context\n\n{context}"
+    else:
+        system_prompt += (
+            "No stored research chunks were found for this session. "
+            "Answer based on your general knowledge."
+        )
+
+    # Build messages list for Claude (exclude system from messages array)
+    claude_messages = [
+        {"role": m.role, "content": m.content}
+        for m in request.messages
+    ]
+
+    # Stream tokens from Claude
+    try:
+        with anthropic_client.messages.stream(
+            model="claude-sonnet-4-6",
+            max_tokens=2048,
+            system=system_prompt,
+            messages=claude_messages,
+        ) as stream:
+            for text in stream.text_stream:
+                yield {"data": json.dumps({"type": "token", "text": text})}
+                await asyncio.sleep(0)  # yield control to event loop
+    except Exception as exc:
+        yield {"data": json.dumps({"type": "error", "message": str(exc)})}
+        return
+
+    yield {"data": json.dumps({"type": "done"})}
+
+
+@app.post("/api/chat")
+async def chat_stream(request: ChatRequest):
+    """
+    Stream Claude follow-up chat grounded in the stored Pinecone research.
+
+    SSE event types:
+      - token   {"type": "token", "text": "..."}
+      - done    {"type": "done"}
+      - error   {"type": "error", "message": "..."}
+    """
+    if not request.research_id:
+        raise HTTPException(status_code=400, detail="research_id is required")
+
+    return EventSourceResponse(generate_chat(request))
