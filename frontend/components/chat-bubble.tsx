@@ -20,43 +20,49 @@ function renderMarkdown(text: string) {
     .replace(/\n/g, "<br />");
 }
 
-export function ChatBubble({ message, isStreaming, status }: Props) {
+export function ChatBubble({ message, isStreaming }: Props) {
   const isUser = message.role === "user";
 
   return (
-    <div className={cn("flex w-full", isUser ? "justify-end" : "justify-start")}>
-      <div
-        className={cn(
-          "max-w-[85%] rounded-2xl px-4 py-3 text-sm",
-          isUser
-            ? "bg-primary text-primary-foreground rounded-br-sm"
-            : "bg-muted text-foreground rounded-bl-sm"
-        )}
-      >
-        {isUser ? (
-          <p className="whitespace-pre-wrap">{message.content}</p>
-        ) : message.content ? (
-          <div className="prose">
-            <span
-              dangerouslySetInnerHTML={{
-                __html: `<p>${renderMarkdown(message.content)}</p>`,
-              }}
-            />
-            {isStreaming && (
-              <span className="streaming-cursor ml-0.5 inline-block">▋</span>
-            )}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <span className="inline-flex gap-1">
-              <span className="animate-bounce [animation-delay:-0.3s]">·</span>
-              <span className="animate-bounce [animation-delay:-0.15s]">·</span>
-              <span className="animate-bounce">·</span>
-            </span>
-            <span className="text-xs">Thinking…</span>
-          </div>
-        )}
-      </div>
+    <div
+      className={cn(
+        "flex w-full animate-fade-in-up",
+        isUser ? "justify-end" : "justify-start"
+      )}
+    >
+      {isUser ? (
+        /* User bubble — indigo tint */
+        <div className="max-w-[78%] rounded-2xl rounded-br-sm bg-primary/15 px-4 py-3 text-sm ring-1 ring-primary/25">
+          <p className="whitespace-pre-wrap text-foreground/90 leading-relaxed">{message.content}</p>
+        </div>
+      ) : (
+        /* AI bubble — card surface */
+        <div className="max-w-[88%] rounded-2xl rounded-bl-sm border border-border/50 bg-card px-4 py-3 text-sm shadow-[0_2px_16px_oklch(0_0_0/20%)]">
+          {message.content ? (
+            <>
+              <div
+                className="prose text-sm"
+                dangerouslySetInnerHTML={{
+                  __html: `<p>${renderMarkdown(message.content)}</p>`,
+                }}
+              />
+              {isStreaming && (
+                <span className="streaming-cursor ml-0.5 inline-block text-primary">▋</span>
+              )}
+            </>
+          ) : (
+            /* Thinking state */
+            <div className="flex items-center gap-2.5 text-muted-foreground">
+              <div className="flex gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary/50 animate-bounce [animation-delay:-0.3s]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-primary/50 animate-bounce [animation-delay:-0.15s]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-primary/50 animate-bounce" />
+              </div>
+              <span className="text-xs">Thinking…</span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
