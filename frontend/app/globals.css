@@ -142,3 +142,25 @@
 .prose h3 { font-size: 1rem; }
 .prose strong { font-weight: 600; }
 .prose em { font-style: italic; }
+
+/* Streaming cursor blink animation */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.streaming-cursor {
+  animation: blink 1s step-start infinite;
+  font-size: 0.85em;
+  line-height: 1;
+}
+
+/* Mode transition fade */
+.mode-fade-enter {
+  opacity: 0;
+  transform: translateY(4px);
+}
+.mode-fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
