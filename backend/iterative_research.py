@@ -45,6 +45,7 @@ class IterativeResearchState(TypedDict):
     improvement_history: List[str]
     current_critique: Dict
     needs_more_research: bool
+    sources: List[Dict]
 
 
 def research_with_delay(state, questions):
@@ -64,6 +65,22 @@ def research_with_delay(state, questions):
                 'question': question,
                 'iteration': state['iteration']
             })
+            # Collect source for citation
+            url = result.get('url', '')
+            if url:
+                score = result.get('score', 0.0)
+                existing = next(
+                    (s for s in state['sources'] if s['url'] == url), None
+                )
+                if existing:
+                    if score > existing['score']:
+                        existing['score'] = score
+                else:
+                    state['sources'].append({
+                        'title': result.get('title', url),
+                        'url': url,
+                        'score': score,
+                    })
 
     if all_texts:
         print(f"💾 Storing {len(all_texts)} sources...")
@@ -154,7 +171,7 @@ The improved report should be MORE DETAILED (600+ words) and address EVERY weakn
 NO bullet points."""
 
     message = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model="claude-sonnet-4-6",
         max_tokens=3500,
         temperature=0.3,
         messages=[{"role": "user", "content": prompt}]
@@ -280,7 +297,8 @@ def run_iterative_research(
         'quality_history': [],
         'improvement_history': [],
         'current_critique': {},
-        'needs_more_research': True
+        'needs_more_research': True,
+        'sources': [],
     }
 
     state = run_initial_research(state)
@@ -310,6 +328,11 @@ def run_iterative_research(
     total_improvement = state['quality_history'][-1]['overall'] - state['quality_history'][0]['overall']
     print(f"\nTotal Improvement: {total_improvement:+.1f} points")
     print('='*70 + '\n')
+
+    # Sort and cap sources at 15
+    state['sources'] = sorted(
+        state['sources'], key=lambda s: s['score'], reverse=True
+    )[:15]
 
     return state
 
