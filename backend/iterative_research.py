@@ -54,7 +54,7 @@ def research_with_delay(state, questions):
     """Parallel web search. Returns raw results immediately; stores in Pinecone in background."""
 
     def fetch(question):
-        return question, tools.search_web(query=question, max_results=3)
+        return question, tools.search_web(query=question, max_results=5)
 
     question_results = {}
     with ThreadPoolExecutor(max_workers=len(questions)) as executor:
@@ -126,15 +126,16 @@ def smart_synthesis(state, is_improvement=False):
         new_questions = state['research_questions']
         print(f"📚 Retrieving context for {len(new_questions)} questions...")
 
-    # Use raw Tavily results directly — no Pinecone wait needed
+    # Use raw Tavily results directly — truncate each snippet to keep prompt lean
     context_parts = []
     for question in new_questions:
         results = state['search_results'].get(question, [])
         if results:
             context_parts.append(f"\nQuestion: {question}\n")
             for r in results:
+                snippet = r['content'][:1200] if len(r['content']) > 1200 else r['content']
                 context_parts.append(f"Source: {r['title']}")
-                context_parts.append(f"{r['content']}\n")
+                context_parts.append(f"{snippet}\n")
 
     new_context = "\n".join(context_parts) if context_parts else "No new context."
 

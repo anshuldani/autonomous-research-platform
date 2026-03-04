@@ -48,7 +48,7 @@ export function useResearch() {
         body: JSON.stringify({
           topic,
           quality_threshold: 7.5,
-          max_iterations: 1,
+          max_iterations: 2,
         }),
         signal: abortRef.current.signal,
       });
