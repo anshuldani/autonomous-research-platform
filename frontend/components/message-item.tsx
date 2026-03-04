@@ -1,7 +1,6 @@
 "use client";
 
 import type { Message } from "@/lib/types";
-import { QualityBadge } from "@/components/quality-badge";
 import { CitationList } from "@/components/citation-list";
 import { cn } from "@/lib/utils";
 
@@ -44,9 +43,8 @@ export function MessageItem({ message }: Props) {
               <div className="h-0.5 w-full rounded-t-2xl bg-gradient-to-r from-primary/60 via-primary/30 to-transparent" />
 
               {/* Report body */}
-              <div className="px-5 pt-5 pb-0">
-                {/* Scrollable summary — capped at 50vh so quality panel stays on screen */}
-                <div className="overflow-y-auto max-h-[50vh] pr-1">
+              <div className="px-5 pt-5 pb-5">
+                <div className="overflow-y-auto max-h-[55vh] pr-1">
                   <div
                     className="prose"
                     dangerouslySetInnerHTML={{
@@ -55,14 +53,8 @@ export function MessageItem({ message }: Props) {
                   />
                 </div>
 
-                {message.result && (
-                  <div className="pt-0 pb-5">
-                    <QualityBadge
-                      qualityHistory={message.result.quality_history}
-                      iterations={message.result.iterations}
-                    />
-                    <CitationList citations={message.result.citations} />
-                  </div>
+                {message.result?.citations && (
+                  <CitationList citations={message.result.citations} />
                 )}
               </div>
             </div>

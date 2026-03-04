@@ -9,12 +9,6 @@ interface Props {
   result: ResearchResult;
 }
 
-function scoreColor(score: number) {
-  if (score >= 8) return { text: "text-emerald-400", ring: "ring-emerald-500/30", bg: "bg-emerald-500/10" };
-  if (score >= 6) return { text: "text-amber-400",   ring: "ring-amber-500/30",   bg: "bg-amber-500/10"   };
-  return           { text: "text-rose-400",    ring: "ring-rose-500/30",    bg: "bg-rose-500/10"    };
-}
-
 function renderMarkdown(text: string) {
   return text
     .replace(/^### (.+)$/gm, "<h3>$1</h3>")
@@ -31,10 +25,6 @@ export function PinnedResearch({ topic, result }: Props) {
   const [collapsed, setCollapsed] = useState(true);
   const [expanded, setExpanded] = useState(false);
 
-  const finalScore =
-    result.quality_history[result.quality_history.length - 1]?.overall ?? 0;
-  const { text: textClass, ring, bg } = scoreColor(finalScore);
-
   const PREVIEW = 700;
   const isLong = result.summary.length > PREVIEW;
 
@@ -50,12 +40,6 @@ export function PinnedResearch({ topic, result }: Props) {
           className="flex w-full items-center justify-between px-5 py-3.5 text-left hover:bg-muted/20 transition-colors"
         >
           <div className="flex items-center gap-3 min-w-0">
-            {/* Score chip */}
-            <span className={`shrink-0 inline-flex items-center gap-1 rounded-lg ${bg} ring-1 ${ring} px-2.5 py-1 text-xs font-bold tabular-nums ${textClass}`}>
-              {finalScore.toFixed(1)}
-              <span className="font-normal text-[10px] opacity-70">/10</span>
-            </span>
-
             {/* Topic */}
             <span className="truncate text-sm font-semibold text-foreground">
               {topic}
