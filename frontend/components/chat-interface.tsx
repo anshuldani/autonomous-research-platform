@@ -6,11 +6,12 @@ import { MessageList } from "@/components/message-list";
 import { ChatInput } from "@/components/chat-input";
 import { PinnedResearch } from "@/components/pinned-research";
 import { FollowUpPanel } from "@/components/follow-up-panel";
+import { ResearchStatus } from "@/components/research-status";
 
 type Mode = "research" | "chat";
 
 export function ChatInterface() {
-  const { messages, status, sendTopic, stop, reset } = useResearch();
+  const { messages, status, step, sendTopic, stop, reset } = useResearch();
   const [inputValue, setInputValue] = useState("");
   const [mode, setMode] = useState<Mode>("research");
 
@@ -90,35 +91,8 @@ export function ChatInterface() {
         </div>
       </header>
 
-      {/* ── Research progress banner ── */}
-      {isResearching && (
-        <div className="relative overflow-hidden border-b border-primary/20 bg-primary/5 px-5 py-2 animate-fade-in">
-          {/* Shimmer sweep */}
-          <div
-            className="absolute inset-0 -translate-x-full animate-[shimmer_2s_linear_infinite]"
-            style={{
-              background:
-                "linear-gradient(90deg, transparent 0%, oklch(0.65 0.22 270 / 8%) 50%, transparent 100%)",
-              backgroundSize: "200% 100%",
-              animation: "shimmer 2s linear infinite",
-            }}
-          />
-          <div className="relative flex items-center gap-2.5">
-            <div className="flex gap-1">
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  className="h-1.5 w-1.5 rounded-full bg-primary/70 animate-bounce"
-                  style={{ animationDelay: `${i * 0.15}s` }}
-                />
-              ))}
-            </div>
-            <span className="text-xs text-primary/80 font-medium">
-              Searching the web, building knowledge base, synthesizing report…
-            </span>
-          </div>
-        </div>
-      )}
+      {/* ── Research progress status ── */}
+      {isResearching && <ResearchStatus step={step} />}
 
       {/* ── Modes ── */}
       {mode === "research" ? (

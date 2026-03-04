@@ -11,9 +11,19 @@ function makeId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+function detectStep(msg: string): string | null {
+  if (/ITERATION \d+: INITIAL RESEARCH|STEP 1: PLANNING/i.test(msg)) return "planning";
+  if (/Searching web/i.test(msg)) return "searching";
+  if (/⏱\s+search:/i.test(msg)) return "synthesising";
+  if (/⏱\s+synthesis:/i.test(msg)) return "scoring";
+  if (/TARGETED IMPROVEMENT|ITERATION [23]/i.test(msg)) return "refining";
+  return null;
+}
+
 export function useResearch() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<ResearchStatus>("idle");
+  const [step, setStep] = useState<string>("planning");
   const abortRef = useRef<AbortController | null>(null);
 
   const sendTopic = useCallback(async (topic: string) => {
@@ -28,6 +38,7 @@ export function useResearch() {
     };
     setMessages((prev) => [...prev, userMsg]);
     setStatus("researching");
+    setStep("planning");
 
     // Placeholder assistant message (streaming into it)
     const assistantId = makeId();
@@ -91,7 +102,10 @@ export function useResearch() {
             continue;
           }
 
-          if (event.type === "result") {
+          if (event.type === "progress") {
+            const detected = detectStep(event.message as string);
+            if (detected) setStep(detected);
+          } else if (event.type === "result") {
             const result: ResearchResult = {
               summary: event.summary as string,
               quality_history: event.quality_history as ResearchResult["quality_history"],
@@ -139,7 +153,8 @@ export function useResearch() {
     abortRef.current?.abort();
     setMessages([]);
     setStatus("idle");
+    setStep("planning");
   }, []);
 
-  return { messages, status, sendTopic, stop, reset };
+  return { messages, status, step, sendTopic, stop, reset };
 }
