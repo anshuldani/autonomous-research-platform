@@ -317,3 +317,29 @@ a:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ─── Homepage section transitions ──────────────────────────────────── */
+section + section {
+  position: relative;
+}
+
+/* Thin indigo rule between sections */
+.homepage-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    oklch(0.65 0.22 270 / 20%) 30%,
+    oklch(0.65 0.22 270 / 20%) 70%,
+    transparent 100%
+  );
+}
+
+/* Hover lift for stat / feature cards */
+.card-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px oklch(0 0 0 / 35%);
+}
