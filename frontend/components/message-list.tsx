@@ -218,7 +218,7 @@ export function MessageList({ messages, onSelectExample }: Props) {
               {STEPS.map((step, i) => (
                 <div
                   key={step.n}
-                  className="group relative overflow-hidden rounded-xl border border-border/50 bg-card/50 p-4 transition-all hover:border-primary/30 hover:bg-card"
+                  className="card-lift group relative overflow-hidden rounded-xl border border-border/50 bg-card/50 p-4 transition-all hover:border-primary/30 hover:bg-card"
                   style={{ animationDelay: `${i * 60}ms` }}
                 >
                   {/* Step number watermark */}
