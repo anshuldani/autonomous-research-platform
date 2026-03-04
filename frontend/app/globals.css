@@ -163,8 +163,8 @@
   to   { opacity: 1; }
 }
 @keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position:  200% center; }
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
 }
 @keyframes glow-pulse {
   0%, 100% { box-shadow: 0 0 0 0 oklch(0.65 0.22 270 / 0%); }
@@ -199,6 +199,16 @@
 .delay-75  { animation-delay: 75ms; }
 .delay-150 { animation-delay: 150ms; }
 .delay-225 { animation-delay: 225ms; }
+
+/* ─── Dot grid background ────────────────────────────────────────────── */
+.dot-grid {
+  background-image: radial-gradient(
+    circle,
+    oklch(0.35 0.02 265 / 50%) 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
+}
 
 /* ─── Glass morphism utility ─────────────────────────────────────────── */
 .glass {
