@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import type { QualityRecord } from "@/lib/types";
 
 interface Props {
@@ -8,10 +7,23 @@ interface Props {
   iterations: number;
 }
 
-function scoreColor(score: number) {
-  if (score >= 8) return "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300";
-  if (score >= 6) return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300";
-  return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300";
+function scoreClass(score: number) {
+  if (score >= 8) return { text: "score-high", bg: "score-bg-high" };
+  if (score >= 6) return { text: "score-mid",  bg: "score-bg-mid" };
+  return           { text: "score-low",  bg: "score-bg-low" };
+}
+
+function ScoreBar({ score }: { score: number }) {
+  const pct = Math.min(100, (score / 10) * 100);
+  const { text } = scoreClass(score);
+  return (
+    <div className="h-1 w-24 rounded-full bg-muted overflow-hidden">
+      <div
+        className={`h-full rounded-full transition-all ${text === "score-high" ? "bg-emerald-500" : text === "score-mid" ? "bg-amber-500" : "bg-rose-500"}`}
+        style={{ width: `${pct}%` }}
+      />
+    </div>
+  );
 }
 
 export function QualityBadge({ qualityHistory, iterations }: Props) {
@@ -20,45 +32,81 @@ export function QualityBadge({ qualityHistory, iterations }: Props) {
   const first = qualityHistory[0];
   const last = qualityHistory[qualityHistory.length - 1];
   const improved = last.overall - first.overall;
+  const { text: textClass, bg: bgClass } = scoreClass(last.overall);
 
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4">
-      {/* Final score */}
-      <span
-        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${scoreColor(last.overall)}`}
-      >
-        ★ {last.overall.toFixed(1)} / 10
-      </span>
-
-      {/* Iterations */}
-      <Badge variant="secondary" className="text-xs">
-        {iterations} iteration{iterations !== 1 ? "s" : ""}
-      </Badge>
-
-      {/* Improvement delta */}
-      {iterations > 1 && (
-        <Badge variant="outline" className="text-xs">
-          {improved >= 0 ? "+" : ""}
-          {improved.toFixed(1)} pts improvement
-        </Badge>
-      )}
-
-      {/* Per-iteration scores */}
-      {qualityHistory.length > 1 && (
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <span>Progression:</span>
-          {qualityHistory.map((r, i) => (
-            <span key={i}>
-              <span className="font-medium text-foreground">
-                {r.overall.toFixed(1)}
-              </span>
-              {i < qualityHistory.length - 1 && (
-                <span className="mx-0.5 text-muted-foreground">→</span>
-              )}
+    <div className="mt-5 rounded-xl border border-border/60 bg-muted/30 p-4 animate-fade-in">
+      <div className="flex flex-wrap items-start gap-4">
+        {/* Score block */}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground/70 font-semibold">
+            Quality Score
+          </span>
+          <div className="flex items-baseline gap-1.5">
+            <span className={`text-2xl font-bold tabular-nums ${textClass}`}>
+              {last.overall.toFixed(1)}
             </span>
-          ))}
+            <span className="text-xs text-muted-foreground">/&nbsp;10</span>
+          </div>
+          <ScoreBar score={last.overall} />
         </div>
-      )}
+
+        {/* Divider */}
+        <div className="h-12 w-px bg-border/60 hidden sm:block" />
+
+        {/* Iterations & improvement */}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground/70 font-semibold">
+            Iterations
+          </span>
+          <div className="flex items-center gap-2">
+            {qualityHistory.map((r, i) => (
+              <span key={i} className="flex items-center gap-1.5">
+                <span className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-semibold border ${scoreClass(r.overall).bg}`}>
+                  {r.overall.toFixed(1)}
+                </span>
+                {i < qualityHistory.length - 1 && (
+                  <svg className="h-3 w-3 text-muted-foreground/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                )}
+              </span>
+            ))}
+          </div>
+          {iterations > 1 && (
+            <span className={`text-xs font-medium ${improved >= 0 ? "score-high" : "score-low"}`}>
+              {improved >= 0 ? "+" : ""}{improved.toFixed(1)} pts over {iterations} iterations
+            </span>
+          )}
+        </div>
+
+        {/* Sub-scores */}
+        {last.scores && (
+          <>
+            <div className="h-12 w-px bg-border/60 hidden lg:block" />
+            <div className="hidden lg:flex flex-col gap-1.5">
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground/70 font-semibold">
+                Breakdown
+              </span>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground">
+                {[
+                  ["Depth",     last.scores.depth_score],
+                  ["Relevance", last.scores.relevance_score],
+                  ["Clarity",   last.scores.clarity_score],
+                  ["Coverage",  last.scores.coverage_score],
+                ].map(([label, val]) => (
+                  <div key={label as string} className="flex items-center justify-between gap-3">
+                    <span>{label}</span>
+                    <span className={`font-semibold tabular-nums ${scoreClass(val as number).text}`}>
+                      {(val as number).toFixed(1)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
