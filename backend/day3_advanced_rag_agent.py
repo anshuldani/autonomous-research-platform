@@ -76,7 +76,7 @@ def planning_agent(state: AdvancedResearchState) -> AdvancedResearchState:
     print(f"Topic: {state['topic']}\n")
     
     message = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model="claude-sonnet-4-6",
         max_tokens=1024,
         messages=[{
             "role": "user",
@@ -257,7 +257,7 @@ def advanced_rag_synthesis_agent(state: AdvancedResearchState) -> AdvancedResear
     print(f"Synthesizing from {state['quality_metrics']['total_chunks_retrieved']} high-quality chunks...")
     
     message = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model="claude-sonnet-4-6",
         max_tokens=2048,
         messages=[{
             "role": "user",
