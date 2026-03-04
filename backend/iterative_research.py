@@ -11,6 +11,7 @@ import os
 from dotenv import load_dotenv
 import uuid
 import time
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from research_tools import ResearchTools
@@ -50,56 +51,67 @@ class IterativeResearchState(TypedDict):
 
 
 def research_with_delay(state, questions):
-    """Research and store with indexing delay — searches run in parallel."""
-
-    all_texts = []
-    all_metadata = []
-    new_sources = []
+    """Parallel web search. Returns raw results immediately; stores in Pinecone in background."""
 
     def fetch(question):
-        return question, tools.search_web(query=question, max_results=2)
+        return question, tools.search_web(query=question, max_results=3)
 
+    question_results = {}
     with ThreadPoolExecutor(max_workers=len(questions)) as executor:
         futures = {executor.submit(fetch, q): q for q in questions}
         for future in as_completed(futures):
             question, results = future.result()
-            for result in results:
-                all_texts.append(result['content'])
-                all_metadata.append({
-                    'title': result['title'],
-                    'url': result['url'],
-                    'question': question,
-                    'iteration': state['iteration']
-                })
-                url = result.get('url', '')
-                if url:
-                    new_sources.append({
+            question_results[question] = results
+
+    # Accumulate raw results into state (used directly by smart_synthesis)
+    for question, results in question_results.items():
+        state['search_results'][question] = results
+        for result in results:
+            url = result.get('url', '')
+            if url:
+                score = result.get('score', 0.0)
+                existing = next((s for s in state['sources'] if s['url'] == url), None)
+                if existing:
+                    if score > existing['score']:
+                        existing['score'] = score
+                else:
+                    state['sources'].append({
                         'title': result.get('title', url),
                         'url': url,
-                        'score': result.get('score', 0.0),
+                        'score': score,
                     })
 
-    # Merge new sources into state (deduplicate by URL, keep highest score)
-    for src in new_sources:
-        existing = next((s for s in state['sources'] if s['url'] == src['url']), None)
-        if existing:
-            if src['score'] > existing['score']:
-                existing['score'] = src['score']
-        else:
-            state['sources'].append(src)
+    # Build Pinecone payload
+    all_texts, all_metadata = [], []
+    for question, results in question_results.items():
+        for result in results:
+            all_texts.append(result['content'])
+            all_metadata.append({
+                'title': result['title'],
+                'url': result['url'],
+                'question': question,
+                'iteration': state['iteration'],
+            })
 
     if all_texts:
-        print(f"💾 Storing {len(all_texts)} sources...")
-        vector_store.store_documents(
-            texts=all_texts,
-            metadata=all_metadata,
-            research_id=state['research_id'],
-            auto_chunk=True
-        )
         state['stored_chunks'] += len(all_texts)
+        research_id = state['research_id']
 
-        print("⏳ Indexing delay (1s)...")
-        time.sleep(1)
+        # Store in Pinecone in background so synthesis doesn't wait
+        def _store():
+            try:
+                print(f"💾 [bg] Storing {len(all_texts)} docs in Pinecone...")
+                vector_store.store_documents(
+                    texts=all_texts,
+                    metadata=all_metadata,
+                    research_id=research_id,
+                    auto_chunk=True,
+                )
+                print("✅ [bg] Pinecone storage complete")
+            except Exception as exc:
+                print(f"⚠️  [bg] Pinecone storage failed: {exc}")
+
+        threading.Thread(target=_store, daemon=True).start()
 
     return state
 
@@ -114,31 +126,15 @@ def smart_synthesis(state, is_improvement=False):
         new_questions = state['research_questions']
         print(f"📚 Retrieving context for {len(new_questions)} questions...")
 
-    def fetch_context(question):
-        results = vector_store.hybrid_search(
-            query=question,
-            research_id=state['research_id'],
-            top_k=2,
-            alpha=0.7
-        )
-        return question, results
-
-    # Run all hybrid searches in parallel, then reassemble in original order
-    question_results = {}
-    with ThreadPoolExecutor(max_workers=len(new_questions)) as executor:
-        futures = {executor.submit(fetch_context, q): q for q in new_questions}
-        for future in as_completed(futures):
-            question, results = future.result()
-            question_results[question] = results
-
+    # Use raw Tavily results directly — no Pinecone wait needed
     context_parts = []
     for question in new_questions:
-        results = question_results.get(question, [])
+        results = state['search_results'].get(question, [])
         if results:
             context_parts.append(f"\nQuestion: {question}\n")
             for r in results:
-                context_parts.append(f"Source: {r['metadata'].get('title', 'N/A')}")
-                context_parts.append(f"{r['text']}\n")
+                context_parts.append(f"Source: {r['title']}")
+                context_parts.append(f"{r['content']}\n")
 
     new_context = "\n".join(context_parts) if context_parts else "No new context."
 
