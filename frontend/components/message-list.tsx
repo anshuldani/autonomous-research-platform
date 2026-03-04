@@ -8,25 +8,23 @@ import type { Message } from "@/lib/types";
 /* ─── Static data ───────────────────────────────────────────────────── */
 
 const STATS = [
-  { value: "15+",    label: "Sources per research",   sub: "Web-scraped & ranked" },
-  { value: "3",      label: "Iterative refinements",  sub: "Self-critique loop" },
-  { value: "7.5/10", label: "Quality threshold",      sub: "Before report finalises" },
-  { value: "100%",   label: "AI-automated",           sub: "Zero human intervention" },
+  { value: "15+",   label: "Sources per query",    sub: "Web-scraped & ranked" },
+  { value: "2",     label: "Refinement passes",    sub: "Self-critique loop" },
+  { value: "7.5/10", label: "Quality threshold",   sub: "Before report finalises" },
+  { value: "100%",  label: "AI-automated",          sub: "Zero human intervention" },
 ];
 
 const STEPS = [
   {
     n: "01",
-    title: "Plan & Question",
-    body: "The planning agent decomposes your topic into targeted research questions.",
-    icon: (
-      <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-    ),
+    title: "Plan",
+    body: "The planning agent breaks your topic into three targeted research questions.",
+    icon: <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />,
   },
   {
     n: "02",
-    title: "Web Search",
-    body: "Tavily AI searches the live web and returns the most relevant, high-quality sources.",
+    title: "Search",
+    body: "Tavily searches the live web in parallel for all three questions simultaneously.",
     icon: (
       <>
         <circle cx="11" cy="11" r="8" />
@@ -36,8 +34,8 @@ const STEPS = [
   },
   {
     n: "03",
-    title: "Vector RAG",
-    body: "Documents are chunked, embedded with Voyage AI, and stored in Pinecone for hybrid semantic search.",
+    title: "Store",
+    body: "Sources are embedded with Voyage AI and stored in Pinecone for follow-up RAG queries.",
     icon: (
       <>
         <ellipse cx="12" cy="5" rx="9" ry="3" />
@@ -49,31 +47,26 @@ const STEPS = [
   {
     n: "04",
     title: "Synthesise",
-    body: "Claude writes a comprehensive 600+ word report grounded in retrieved context.",
+    body: "Claude writes a structured 600+ word report grounded in the retrieved sources.",
     icon: (
       <>
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
         <polyline points="14 2 14 8 20 8" />
         <line x1="16" y1="13" x2="8" y2="13" />
         <line x1="16" y1="17" x2="8" y2="17" />
-        <polyline points="10 9 9 9 8 9" />
       </>
     ),
   },
   {
     n: "05",
-    title: "Critique & Score",
-    body: "A separate critic agent scores depth, relevance, clarity and coverage on a 0–10 scale.",
-    icon: (
-      <>
-        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-      </>
-    ),
+    title: "Score",
+    body: "A critic model evaluates depth, relevance, clarity, and coverage on a 0–10 scale.",
+    icon: <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />,
   },
   {
     n: "06",
-    title: "Iterate to Threshold",
-    body: "If the score falls below 7.5/10 the agent researches gaps and rewrites — up to 3 times.",
+    title: "Refine",
+    body: "If the score is below 7.5 the agent researches gaps and rewrites — up to twice.",
     icon: (
       <>
         <polyline points="1 4 1 10 7 10" />
@@ -85,35 +78,42 @@ const STEPS = [
 
 const FEATURES = [
   {
-    title: "Hybrid Search",
-    body: "Combines dense (semantic) and sparse (keyword) retrieval for maximum recall across stored documents.",
+    title: "Parallel Web Search",
+    body: "All research questions are searched simultaneously via Tavily, cutting search time to a single network round-trip.",
     color: "from-violet-500/20 to-indigo-500/10",
     ring: "ring-violet-500/20",
   },
   {
     title: "Self-Critique Loop",
-    body: "The critique agent identifies weaknesses and generates targeted follow-up questions to fill knowledge gaps.",
+    body: "A separate critic agent scores the report and generates targeted follow-up questions to fill knowledge gaps before delivery.",
     color: "from-indigo-500/20 to-blue-500/10",
     ring: "ring-indigo-500/20",
   },
   {
-    title: "Grounded Follow-up",
-    body: "After research, ask unlimited questions. Answers are grounded in the stored Pinecone knowledge base via RAG.",
+    title: "RAG Follow-up Chat",
+    body: "After research completes, ask unlimited questions answered by Claude grounded in the stored Pinecone knowledge base.",
     color: "from-sky-500/20 to-indigo-500/10",
     ring: "ring-sky-500/20",
   },
   {
-    title: "Quality Scoring",
-    body: "Every report is scored across four dimensions: depth, relevance, clarity, and coverage — before being delivered.",
+    title: "Source Citations",
+    body: "Every report links back to the original web sources so you can verify claims and explore further.",
     color: "from-emerald-500/20 to-teal-500/10",
     ring: "ring-emerald-500/20",
   },
 ];
 
 const EXAMPLES = [
-  { topic: "CRISPR applications in medicine",          label: "Gene Editing",   delay: "delay-75" },
+  { topic: "CRISPR applications in medicine",           label: "Gene Editing",   delay: "delay-75" },
   { topic: "Impact of microplastics on ocean ecosystems", label: "Marine Science", delay: "delay-150" },
-  { topic: "Breakthroughs in quantum computing",       label: "Quantum Tech",   delay: "delay-225" },
+  { topic: "Breakthroughs in quantum computing",        label: "Quantum Tech",   delay: "delay-225" },
+];
+
+const STACK = [
+  { name: "Claude Sonnet 4.6", role: "Research & Synthesis" },
+  { name: "Tavily Search",     role: "Live Web Search" },
+  { name: "Pinecone",          role: "Vector Database" },
+  { name: "Voyage AI",         role: "Embeddings" },
 ];
 
 /* ─── Icons ─────────────────────────────────────────────────────────── */
@@ -152,6 +152,7 @@ export function MessageList({ messages, onSelectExample }: Props) {
   if (messages.length === 0) {
     return (
       <div className="flex-1 overflow-y-auto">
+
         {/* Hero ─────────────────────────────────────────────────────── */}
         <section className="dot-grid flex flex-col items-center justify-center gap-6 px-4 py-16 text-center">
           <div className="animate-fade-in-up space-y-4">
@@ -165,9 +166,9 @@ export function MessageList({ messages, onSelectExample }: Props) {
                 <span className="gradient-text-shimmer">Autonomous Research Agent</span>
               </h1>
               <p className="mt-3 mx-auto max-w-lg text-sm leading-relaxed text-muted-foreground">
-                An AI agent that searches the live web, builds a vector knowledge base,
-                writes a comprehensive report, scores it with a critic model, and
-                iteratively improves the quality — fully automated.
+                Enter any research topic. The agent searches the live web, builds a
+                private knowledge base, writes a comprehensive report, critiques it,
+                and refines until the quality threshold is met — fully automated.
               </p>
             </div>
           </div>
@@ -221,7 +222,6 @@ export function MessageList({ messages, onSelectExample }: Props) {
                   className="card-lift group relative overflow-hidden rounded-xl border border-border/50 bg-card/50 p-4 transition-all hover:border-primary/30 hover:bg-card"
                   style={{ animationDelay: `${i * 60}ms` }}
                 >
-                  {/* Step number watermark */}
                   <span className="absolute right-3 top-2 text-4xl font-black text-primary/5 select-none">
                     {step.n}
                   </span>
@@ -257,46 +257,14 @@ export function MessageList({ messages, onSelectExample }: Props) {
           </div>
         </section>
 
-        {/* Accuracy / tech stack section */}
-        <section className="border-t border-border/40 px-4 py-12">
+        {/* Tech stack ──────────────────────────────────────────────── */}
+        <section className="border-t border-border/40 px-4 py-10">
           <div className="mx-auto max-w-4xl">
-            <div className="mb-8 text-center">
-              <h2 className="text-lg font-bold tracking-tight">Quality scoring breakdown</h2>
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                Every report is evaluated across four dimensions before delivery
-              </p>
-            </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                { dim: "Depth",     pct: 90, desc: "Thoroughness of coverage and analysis" },
-                { dim: "Relevance", pct: 95, desc: "Alignment with the research questions" },
-                { dim: "Clarity",   pct: 85, desc: "Writing quality and structure" },
-                { dim: "Coverage",  pct: 88, desc: "Breadth across all sub-topics" },
-              ].map((d) => (
-                <div key={d.dim} className="rounded-xl border border-border/50 bg-card/50 p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-foreground">{d.dim}</span>
-                    <span className="score-high text-xs font-bold tabular-nums">{d.pct}%</span>
-                  </div>
-                  <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-primary/60 to-emerald-500/80"
-                      style={{ width: `${d.pct}%` }}
-                    />
-                  </div>
-                  <p className="mt-2 text-[11px] text-muted-foreground leading-snug">{d.desc}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Tech stack */}
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-              {[
-                { name: "Claude Sonnet 4.6", role: "Research & Synthesis" },
-                { name: "Tavily Search",     role: "Live Web Search" },
-                { name: "Pinecone",          role: "Vector Database" },
-                { name: "Voyage AI",         role: "Embeddings" },
-              ].map((t) => (
+            <p className="mb-5 text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground/50">
+              Powered by
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {STACK.map((t) => (
                 <div key={t.name} className="flex items-center gap-2 rounded-xl border border-border/50 bg-card/40 px-4 py-2.5">
                   <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                   <div>
@@ -309,12 +277,13 @@ export function MessageList({ messages, onSelectExample }: Props) {
           </div>
         </section>
 
-        {/* Footer note */}
+        {/* Footer ──────────────────────────────────────────────────── */}
         <div className="px-4 py-6 text-center border-t border-border/20">
           <p className="text-[11px] text-muted-foreground/40">
-            Autonomous Research Platform · Built with Next.js, FastAPI, and the Anthropic API
+            Autonomous Research Platform · Next.js · FastAPI · Anthropic API
           </p>
         </div>
+
       </div>
     );
   }
