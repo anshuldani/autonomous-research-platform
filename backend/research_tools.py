@@ -124,18 +124,29 @@ class ResearchTools:
             response = self.tavily.search(
                 query=query,
                 max_results=max_results,
-                search_depth="advanced",
-                include_raw_content=False
+                search_depth="basic",
+                include_raw_content=False,
+                include_answer=True,
             )
             
-            # Process results using helper method
             results = [
                 self._format_search_result(item)
                 for item in response.get('results', [])
             ]
-            
-            print(f"✅ Found {len(results)} results\n")
-            
+
+            # Prepend Tavily's own AI-synthesised answer as the top result —
+            # it's a dense, accurate paragraph that dramatically improves synthesis quality
+            answer = response.get('answer', '')
+            if answer:
+                results.insert(0, {
+                    'title': f'Summary: {query}',
+                    'url': '',
+                    'content': answer,
+                    'score': 1.0,
+                })
+
+            print(f"✅ Found {len(results)} results (answer: {'yes' if answer else 'no'})\n")
+
             return results
             
         except Exception as e:
