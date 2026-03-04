@@ -2,6 +2,7 @@
 
 import type { Message } from "@/lib/types";
 import { QualityBadge } from "@/components/quality-badge";
+import { CitationList } from "@/components/citation-list";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -61,10 +62,13 @@ export function MessageItem({ message }: Props) {
             )}
 
             {message.result && (
-              <QualityBadge
-                qualityHistory={message.result.quality_history}
-                iterations={message.result.iterations}
-              />
+              <>
+                <QualityBadge
+                  qualityHistory={message.result.quality_history}
+                  iterations={message.result.iterations}
+                />
+                <CitationList citations={message.result.citations} />
+              </>
             )}
           </>
         )}
