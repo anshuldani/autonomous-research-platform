@@ -255,6 +255,20 @@ The unit tests mock all external APIs and run without any API keys.
 
 ---
 
+## Key learnings
+
+### Multi-agent architecture
+- Breaking a complex pipeline into **small, single-responsibility agents** (plan → search → synthesise → score → critique) makes each step independently testable and replaceable. The quality scorer doesn't need to know how synthesis works.
+- **Model tiering** matters: using Haiku for structured, deterministic tasks (planning, critique) and Sonnet only for open-ended generation cuts latency and cost significantly without hurting output quality.
+
+### Retrieval-Augmented Generation (RAG)
+- **Chunking strategy** has a bigger impact on retrieval quality than embedding model choice. Overlapping chunks with a consistent size prevent context being split at awkward boundaries.
+- **Hybrid search** (dense vector + sparse keyword) consistently outperforms pure semantic search on factual queries where exact terms matter.
+- **Reranking** (Cohere) as a final pass over retrieved chunks noticeably improves the coherence of follow-up answers — it's a cheap quality boost worth adding.
+- Storing embeddings in Pinecone **in a background thread** during research means the vector index is ready by the time the user asks their first follow-up question.
+
+---
+
 ## Notes
 
 - **Pinecone index**: must be created manually before first run. Name: `research-platform`, dimensions: `1024`, metric: `cosine`, cloud: any serverless region.
