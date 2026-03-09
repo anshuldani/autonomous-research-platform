@@ -59,6 +59,31 @@ Once research is complete, the **follow-up chat** queries Pinecone with the user
 
 ---
 
+## Deployment
+
+| Service | URL |
+|---|---|
+| Frontend (Vercel) | [autonomous-research-platform.vercel.app](https://autonomous-research-platform.vercel.app) |
+| Backend (Railway) | Set `BACKEND_URL` env var in Vercel to your Railway service URL |
+
+### Environment variables
+
+**Backend (Railway)**
+```env
+ANTHROPIC_API_KEY=sk-ant-...
+TAVILY_API_KEY=tvly-...
+PINECONE_API_KEY=pcsk_...
+VOYAGE_API_KEY=pa-...
+COHERE_API_KEY=           # optional
+```
+
+**Frontend (Vercel)**
+```env
+BACKEND_URL=https://your-railway-service.up.railway.app
+```
+
+---
+
 ## Prerequisites
 
 - Python 3.10+
