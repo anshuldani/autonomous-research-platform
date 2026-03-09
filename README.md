@@ -4,6 +4,8 @@ An AI agent that takes a research topic, searches the live web, builds a private
 
 After research completes you can ask unlimited follow-up questions answered by Claude grounded in the stored knowledge base via RAG.
 
+**Live demo:** [autonomous-research-platform.vercel.app](https://autonomous-research-platform.vercel.app)
+
 ---
 
 ## How it works
