@@ -54,6 +54,8 @@ Once research is complete, the **follow-up chat** queries Pinecone with the user
 | Vector DB | Pinecone serverless |
 | Embeddings | Voyage AI (voyage-3, 1024-dim) |
 | Reranking | Cohere (optional — improves follow-up chat) |
+| Frontend deploy | Vercel |
+| Backend deploy | Railway |
 
 ---
 
