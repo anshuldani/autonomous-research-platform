@@ -267,6 +267,24 @@ The unit tests mock all external APIs and run without any API keys.
 - **Reranking** (Cohere) as a final pass over retrieved chunks noticeably improves the coherence of follow-up answers — it's a cheap quality boost worth adding.
 - Storing embeddings in Pinecone **in a background thread** during research means the vector index is ready by the time the user asks their first follow-up question.
 
+### Streaming and perceived performance
+- The biggest UX win wasn't making the pipeline faster — it was **streaming progress updates** to the user so the 30–90 second wait felt active rather than frozen. Real latency and perceived latency are very different problems.
+- SSE (Server-Sent Events) is significantly simpler than WebSockets for one-way server-to-client streaming. It works natively in browsers, survives proxy timeouts with keepalive pings, and needs no special infrastructure.
+- The **"washing machine" UX principle**: users tolerate slow processes when they can see meaningful progress. Showing step names and timings (planning: 1.4s, searching: 3.2s…) is more reassuring than a generic spinner.
+
+### API design and cost
+- Parallelising web searches increases throughput but scales cost **linearly** — N parallel searches = N× API spend. For a production system, staying sequential unless there's a hard latency requirement is the operationally safer default.
+- **Never bake runtime config into build artefacts.** The `BACKEND_URL` must be resolved at request time (via `process.env` in a route handler), not at `next build` time — otherwise every environment change requires a redeploy.
+
+### Deployment
+- FastAPI + Railway + Vercel is a clean separation: Railway handles the long-running Python process (with SSE keepalive), Vercel handles the static Next.js frontend. The only connection between them is the `BACKEND_URL` env var.
+- CORS must explicitly allow the production Vercel origin — `*` doesn't work with credentialed requests, and missing this causes silent failures that look like backend errors.
+- Vercel's hobby plan has a **300-second function timeout** — critical for SSE endpoints that can run 90+ seconds per research job.
+
+### Testing strategy
+- Mocking at the API-client level (patching `anthropic.Anthropic`, `TavilyClient`, etc.) gives fast, reliable unit tests with no API keys required. Integration tests with real APIs are reserved for pre-deploy smoke tests.
+- 10 unit tests covering the research loop and tool wrappers caught multiple regressions during refactoring at zero cost.
+
 ---
 
 ## Notes
