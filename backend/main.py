@@ -133,10 +133,17 @@ async def research_stream(request: ResearchRequest):
         original_stdout = sys.stdout
         sys.stdout = QueueWriter(msg_queue)
         try:
+            def on_synthesis_token(text):
+                if text is None:
+                    msg_queue.put({"type": "synthesis_start"})
+                else:
+                    msg_queue.put({"type": "synthesis_token", "text": text})
+
             state = run_iterative_research(
                 topic=request.topic,
                 quality_threshold=request.quality_threshold,
                 max_iterations=request.max_iterations,
+                on_synthesis_token=on_synthesis_token,
             )
             msg_queue.put({
                 "type": "result",

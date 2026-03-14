@@ -116,7 +116,7 @@ def research_with_delay(state, questions):
     return state
 
 
-def smart_synthesis(state, is_improvement=False):
+def smart_synthesis(state, is_improvement=False, on_token=None):
     """Smart synthesis that builds on previous work."""
 
     if is_improvement:
@@ -189,19 +189,32 @@ Write an improved version (700+ words) that:
 4. Adds specific numbers, statistics, and named studies
 No bullet points."""
 
-    message = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=2500,
-        temperature=0.3,
-        messages=[{"role": "user", "content": prompt}]
-    )
-
-    state['summary'] = message.content[0].text
+    if on_token:
+        on_token(None)  # signal synthesis start
+        with client.messages.stream(
+            model="claude-sonnet-4-6",
+            max_tokens=2500,
+            temperature=0.3,
+            messages=[{"role": "user", "content": prompt}]
+        ) as stream:
+            full_text = ""
+            for text in stream.text_stream:
+                on_token(text)
+                full_text += text
+        state['summary'] = full_text
+    else:
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=2500,
+            temperature=0.3,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        state['summary'] = message.content[0].text
 
     return state
 
 
-def run_initial_research(state):
+def run_initial_research(state, on_token=None):
     """Initial research."""
 
     print(f"\n{'='*70}")
@@ -217,7 +230,7 @@ def run_initial_research(state):
     print(f"⏱  search:    {time.time()-t1:.1f}s")
 
     t2 = time.time()
-    state = smart_synthesis(state, is_improvement=False)
+    state = smart_synthesis(state, is_improvement=False, on_token=on_token)
     print(f"⏱  synthesis: {time.time()-t2:.1f}s")
 
     return state
@@ -269,7 +282,7 @@ def critique_and_decide(state):
     return state
 
 
-def run_improvement_iteration(state):
+def run_improvement_iteration(state, on_token=None):
     """Run improvement iteration."""
 
     state['previous_summary'] = state['summary']
@@ -287,7 +300,7 @@ def run_improvement_iteration(state):
     print()
 
     state = research_with_delay(state, new_questions)
-    state = smart_synthesis(state, is_improvement=True)
+    state = smart_synthesis(state, is_improvement=True, on_token=on_token)
 
     return state
 
@@ -295,7 +308,8 @@ def run_improvement_iteration(state):
 def run_iterative_research(
     topic: str,
     quality_threshold: float = 7.5,
-    max_iterations: int = 3
+    max_iterations: int = 3,
+    on_synthesis_token=None,
 ):
     """Main loop."""
 
@@ -330,11 +344,11 @@ def run_iterative_research(
         'sources': [],
     }
 
-    state = run_initial_research(state)
+    state = run_initial_research(state, on_token=on_synthesis_token)
     state = critique_and_decide(state)
 
     while state['needs_more_research'] and state['iteration'] < max_iterations:
-        state = run_improvement_iteration(state)
+        state = run_improvement_iteration(state, on_token=on_synthesis_token)
         state = critique_and_decide(state)
 
     print(f"\n{'='*70}")
