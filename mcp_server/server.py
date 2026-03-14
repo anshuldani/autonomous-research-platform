@@ -313,6 +313,89 @@ async def score_research(
     return json.dumps(scores, indent=2)
 
 
+# ── Session management tools ──────────────────────────────────────────────────
+
+@mcp.tool()
+def list_sessions() -> str:
+    """
+    List all research sessions completed in this MCP server process.
+
+    Sessions are held in memory and reset on server restart.
+
+    Returns:
+        JSON array of session summaries: [{research_id, topic, iterations,
+        final_score, source_count, stored_chunks, timestamp}]
+    """
+    sessions = session_store.list_all()
+    if not sessions:
+        return json.dumps({"message": "No research sessions in this process yet.", "sessions": []})
+    return json.dumps(sessions, indent=2)
+
+
+@mcp.tool()
+def get_session_report(research_id: str) -> str:
+    """
+    Retrieve the full report for a previously completed research session.
+
+    Args:
+        research_id: ID returned by run_research.
+
+    Returns:
+        JSON object with research_id, topic, summary, quality_history,
+        sources, iterations, improvement_history, stored_chunks, timestamp.
+        Returns an ERROR string if research_id is not found.
+    """
+    if not research_id:
+        return "ERROR: research_id is required"
+
+    session = session_store.get_session(research_id)
+    if not session:
+        return f"ERROR: research_id '{research_id}' not found. Run run_research first or check list_sessions."
+
+    return json.dumps(session, indent=2)
+
+
+@mcp.tool()
+async def get_session_stats(research_id: str) -> str:
+    """
+    Return storage stats for a research session: in-memory chunk count
+    and live Pinecone index total vector count.
+
+    Args:
+        research_id: ID returned by run_research.
+
+    Returns:
+        JSON object with research_id, stored_chunks, index_total_vectors.
+    """
+    if not research_id:
+        return "ERROR: research_id is required"
+
+    session = session_store.get_session(research_id)
+    if not session:
+        return f"ERROR: research_id '{research_id}' not found."
+
+    log(f"get_session_stats — research_id={research_id}")
+
+    index_total = None
+    try:
+        vs = get_vector_store()
+        loop = asyncio.get_event_loop()
+        stats = await loop.run_in_executor(None, vs.get_index_stats)
+        index_total = stats.get("total_vector_count") if isinstance(stats, dict) else None
+    except Exception as exc:
+        log(f"get_session_stats: Pinecone stats unavailable — {exc}")
+
+    return json.dumps(
+        {
+            "research_id": research_id,
+            "topic": session["topic"],
+            "stored_chunks": session["stored_chunks"],
+            "index_total_vectors": index_total,
+        },
+        indent=2,
+    )
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
