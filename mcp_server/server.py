@@ -200,6 +200,67 @@ async def search_research(
     )
 
 
+@mcp.tool()
+async def hybrid_search_research(
+    research_id: str,
+    query: str,
+    top_k: int = 10,
+    alpha: float = 0.7,
+) -> str:
+    """
+    Hybrid semantic + keyword search over a specific research session.
+
+    Combines dense (Voyage AI) and sparse (BM25-style) retrieval for better
+    precision on queries with distinctive keywords.
+
+    Args:
+        research_id: ID returned by run_research.
+        query: Natural-language question or keyword phrase.
+        top_k: Number of chunks to return. Default 10, max 20.
+        alpha: Weight for semantic vs keyword retrieval.
+               1.0 = fully semantic, 0.0 = fully keyword. Default 0.7.
+
+    Returns:
+        JSON array of chunks: [{text, hybrid_score, score, metadata}]
+    """
+    if not research_id or not query:
+        return "ERROR: research_id and query are required"
+
+    top_k = min(top_k, 20)
+    alpha = max(0.0, min(1.0, alpha))
+    log(f"hybrid_search — research_id={research_id}, alpha={alpha}, top_k={top_k}")
+
+    loop = asyncio.get_event_loop()
+    try:
+        vs = get_vector_store()
+        results = await loop.run_in_executor(
+            None,
+            functools.partial(
+                vs.hybrid_search,
+                query=query,
+                research_id=research_id,
+                top_k=top_k,
+                alpha=alpha,
+            ),
+        )
+    except Exception as exc:
+        log(f"hybrid_search_research failed: {exc}")
+        return f"ERROR: {exc}"
+
+    return json.dumps(
+        [
+            {
+                "text": r["text"],
+                "hybrid_score": round(r.get("hybrid_score", r.get("score", 0)), 4),
+                "score": round(r.get("score", 0), 4),
+                "metadata": r.get("metadata", {}),
+            }
+            for r in results
+        ],
+        indent=2,
+    )
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
