@@ -142,6 +142,64 @@ async def run_research(
     )
 
 
+# ── RAG search tools ─────────────────────────────────────────────────────────
+
+@mcp.tool()
+async def search_research(
+    research_id: str,
+    query: str,
+    top_k: int = 5,
+) -> str:
+    """
+    Semantic search over a specific research session stored in Pinecone.
+
+    Embeds the query with Voyage AI and retrieves the most relevant chunks
+    from the vector store, filtered to the given research_id.
+
+    Args:
+        research_id: ID returned by run_research.
+        query: Natural-language question or keyword phrase.
+        top_k: Number of chunks to return. Default 5, max 20.
+
+    Returns:
+        JSON array of chunks: [{text, score, metadata: {title, url, question}}]
+        or an ERROR string if Pinecone is unreachable.
+    """
+    if not research_id or not query:
+        return "ERROR: research_id and query are required"
+
+    top_k = min(top_k, 20)
+    log(f"search_research — research_id={research_id}, query={query!r}, top_k={top_k}")
+
+    loop = asyncio.get_event_loop()
+    try:
+        vs = get_vector_store()
+        results = await loop.run_in_executor(
+            None,
+            functools.partial(
+                vs.search_with_filters,
+                query=query,
+                research_id=research_id,
+                top_k=top_k,
+            ),
+        )
+    except Exception as exc:
+        log(f"search_research failed: {exc}")
+        return f"ERROR: {exc}"
+
+    return json.dumps(
+        [
+            {
+                "text": r["text"],
+                "score": round(r.get("score", 0), 4),
+                "metadata": r.get("metadata", {}),
+            }
+            for r in results
+        ],
+        indent=2,
+    )
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
