@@ -1,0 +1,5 @@
+# MCP server dependencies
+# All other deps (anthropic, pinecone, voyageai, tavily-python, etc.)
+# are inherited from the backend's virtualenv — run from the same venv.
+mcp>=1.0.0
+python-dotenv==1.2.1
