@@ -396,6 +396,67 @@ async def get_session_stats(research_id: str) -> str:
     )
 
 
+# ── MCP Resources ────────────────────────────────────────────────────────────
+
+@mcp.resource("research://sessions")
+def resource_sessions() -> str:
+    """All in-process research sessions (JSON array of summaries)."""
+    sessions = session_store.list_all()
+    return json.dumps(sessions, indent=2)
+
+
+@mcp.resource("research://{research_id}/report")
+def resource_report(research_id: str) -> str:
+    """Full markdown-formatted research report for a session."""
+    session = session_store.get_session(research_id)
+    if not session:
+        return f"No session found for research_id: {research_id}"
+
+    scores = session["quality_history"]
+    score_lines = "\n".join(
+        f"- Iteration {s['iteration']}: {s['overall']:.1f}/10"
+        for s in scores
+    )
+    sources = "\n".join(
+        f"- [{s['title']}]({s['url']})" for s in session["sources"][:10]
+    )
+
+    return f"""# Research Report: {session['topic']}
+
+**Research ID:** `{research_id}`
+**Iterations:** {session['iterations']}
+**Timestamp:** {session['timestamp']}
+
+## Quality Progression
+{score_lines}
+
+## Report
+
+{session['summary']}
+
+## Sources
+{sources}
+"""
+
+
+@mcp.resource("research://{research_id}/sources")
+def resource_sources(research_id: str) -> str:
+    """Top sources (by Tavily relevance score) for a session as JSON."""
+    session = session_store.get_session(research_id)
+    if not session:
+        return json.dumps({"error": f"No session found for {research_id}"})
+    return json.dumps(session["sources"], indent=2)
+
+
+@mcp.resource("research://{research_id}/quality")
+def resource_quality(research_id: str) -> str:
+    """Quality history across iterations for a session as JSON."""
+    session = session_store.get_session(research_id)
+    if not session:
+        return json.dumps({"error": f"No session found for {research_id}"})
+    return json.dumps(session["quality_history"], indent=2)
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
