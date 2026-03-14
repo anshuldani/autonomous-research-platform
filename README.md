@@ -84,6 +84,74 @@ BACKEND_URL=https://your-railway-service.up.railway.app
 
 ---
 
+## MCP Server (Claude Desktop)
+
+Run the research pipeline directly inside Claude Desktop — no web UI required.
+
+### Install
+
+```bash
+# From the project root, using the same venv as the backend
+pip install "mcp>=1.0.0"
+```
+
+### Configure Claude Desktop
+
+Merge the following into `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+
+```json
+{
+  "mcpServers": {
+    "autonomous-research": {
+      "command": "python",
+      "args": ["-m", "mcp_server.server"],
+      "cwd": "/path/to/autonomous-research-platform",
+      "env": {
+        "ANTHROPIC_API_KEY": "...",
+        "TAVILY_API_KEY": "...",
+        "PINECONE_API_KEY": "...",
+        "VOYAGE_API_KEY": "...",
+        "COHERE_API_KEY": ""
+      }
+    }
+  }
+}
+```
+
+A ready-to-edit copy lives at `mcp_server/claude_desktop_config.json`.
+
+### Available tools
+
+| Tool | Description |
+|---|---|
+| `ping` | Health check — returns `"pong"` |
+| `run_research` | Full pipeline: plan → search → synthesise → critique loop. Returns `research_id` + report JSON. |
+| `search_research` | Semantic search over a stored session via Pinecone |
+| `hybrid_search_research` | Hybrid semantic + keyword search (tunable `alpha`) |
+| `score_research` | Claude-based quality scorer (0-10) on any summary |
+| `list_sessions` | List all research sessions in the current process |
+| `get_session_report` | Full stored report for a `research_id` |
+| `get_session_stats` | Chunk count + Pinecone index size for a session |
+
+### Available resources
+
+| URI | Description |
+|---|---|
+| `research://sessions` | All in-process sessions (JSON) |
+| `research://{id}/report` | Markdown report for a session |
+| `research://{id}/sources` | Top sources JSON |
+| `research://{id}/quality` | Quality history across iterations |
+
+### Available prompts
+
+| Prompt | Description |
+|---|---|
+| `research_briefing` | Primes a conversation with a stored report for RAG Q&A |
+| `research_planning` | Generates targeted research questions for a topic |
+| `research_critique` | Structured critique of any summary |
+
+---
+
 ## Prerequisites
 
 - Python 3.10+
