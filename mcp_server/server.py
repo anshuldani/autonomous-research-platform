@@ -261,6 +261,58 @@ async def hybrid_search_research(
     )
 
 
+# ── Quality scoring tool ──────────────────────────────────────────────────────
+
+@mcp.tool()
+async def score_research(
+    topic: str,
+    summary: str,
+    questions: list,
+    sources_count: int = 0,
+) -> str:
+    """
+    Score any research summary using the same Claude-based rubric as the pipeline.
+
+    Evaluates on depth, relevance, clarity, and coverage (each 0-10) and
+    returns weaknesses and improvement suggestions. Useful for evaluating
+    externally generated content without running a full research job.
+
+    Args:
+        topic: Research topic the summary addresses.
+        summary: The research summary text to evaluate.
+        questions: List of research questions the summary should answer.
+        sources_count: Number of sources used (for metadata context).
+
+    Returns:
+        JSON object with overall_score, depth_score, relevance_score,
+        clarity_score, coverage_score, weaknesses, and suggestions.
+    """
+    if not topic or not summary:
+        return "ERROR: topic and summary are required"
+
+    log(f"score_research — topic: {topic!r}")
+
+    from quality_scorer import score_research_quality
+
+    fn = functools.partial(
+        score_research_quality,
+        topic=topic,
+        questions=questions,
+        summary=summary,
+        sources_count=sources_count,
+    )
+
+    loop = asyncio.get_event_loop()
+    try:
+        with redirect_stdout_to_stderr():
+            scores = await loop.run_in_executor(None, fn)
+    except Exception as exc:
+        log(f"score_research failed: {exc}")
+        return f"ERROR: {exc}"
+
+    return json.dumps(scores, indent=2)
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
