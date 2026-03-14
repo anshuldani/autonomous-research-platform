@@ -1,0 +1,22 @@
+{
+  "_comment": "Add the 'autonomous-research' block to your Claude Desktop config.",
+  "_location_macos": "~/Library/Application Support/Claude/claude_desktop_config.json",
+  "_location_windows": "%APPDATA%\\Claude\\claude_desktop_config.json",
+
+  "mcpServers": {
+    "autonomous-research": {
+      "command": "python",
+      "args": [
+        "-m", "mcp_server.server"
+      ],
+      "cwd": "/Users/anshuldani/Documents/Masters_Sem_4/autonomous-research-platform",
+      "env": {
+        "ANTHROPIC_API_KEY": "YOUR_ANTHROPIC_API_KEY",
+        "TAVILY_API_KEY": "YOUR_TAVILY_API_KEY",
+        "PINECONE_API_KEY": "YOUR_PINECONE_API_KEY",
+        "VOYAGE_API_KEY": "YOUR_VOYAGE_API_KEY",
+        "COHERE_API_KEY": "YOUR_COHERE_API_KEY"
+      }
+    }
+  }
+}
