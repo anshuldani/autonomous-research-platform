@@ -29,6 +29,7 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(_BACKEND, ".env"))
 
 from mcp.server.fastmcp import FastMCP
+from mcp.types import PromptMessage, TextContent
 
 from mcp_server.utils import log, redirect_stdout_to_stderr
 from mcp_server import session_store
@@ -455,6 +456,94 @@ def resource_quality(research_id: str) -> str:
     if not session:
         return json.dumps({"error": f"No session found for {research_id}"})
     return json.dumps(session["quality_history"], indent=2)
+
+
+# ── MCP Prompts ───────────────────────────────────────────────────────────────
+
+@mcp.prompt()
+def research_briefing(research_id: str) -> list:
+    """
+    Prime a conversation with the full research report as context.
+
+    Generates a system + user message pair that loads the stored report for
+    research_id into the conversation, instructing Claude to answer follow-up
+    questions accurately and cite sources. Mirrors what /api/chat does in the
+    FastAPI backend, but packaged for direct MCP use.
+
+    Args:
+        research_id: ID returned by run_research.
+    """
+    session = session_store.get_session(research_id)
+    if not session:
+        system_text = "No research session found for the given ID."
+        user_text = f"research_id '{research_id}' was not found. Please run run_research first."
+    else:
+        sources_text = "\n".join(
+            f"- {s['title']} ({s['url']})" for s in session["sources"][:10]
+        )
+        system_text = (
+            f"You are a knowledgeable research assistant. Answer questions based on "
+            f"the research report below. Be concise and accurate; cite specific details "
+            f"and source titles inline when relevant.\n\n"
+            f"## Research Report: {session['topic']}\n\n"
+            f"{session['summary']}\n\n"
+            f"## Sources\n{sources_text}"
+        )
+        user_text = "I'm ready for your questions about the research."
+
+    return [
+        PromptMessage(role="user", content=TextContent(type="text", text=system_text)),
+        PromptMessage(role="assistant", content=TextContent(type="text", text=user_text)),
+    ]
+
+
+@mcp.prompt()
+def research_planning(topic: str) -> list:
+    """
+    Generate targeted research questions for a topic.
+
+    Produces the same planning prompt the pipeline uses internally so you can
+    preview or customise questions before running a full research job.
+
+    Args:
+        topic: The research topic to plan for.
+    """
+    user_text = (
+        f"Generate 3 specific, searchable research questions for the following topic.\n\n"
+        f"Topic: {topic}\n\n"
+        f"Return ONLY a JSON array:\n"
+        f'["Question 1?", "Question 2?", "Question 3?"]'
+    )
+    return [
+        PromptMessage(role="user", content=TextContent(type="text", text=user_text)),
+    ]
+
+
+@mcp.prompt()
+def research_critique(topic: str, summary: str) -> list:
+    """
+    Critique a research summary on depth, relevance, clarity, and coverage.
+
+    Useful for evaluating summaries without running the full quality scorer tool.
+
+    Args:
+        topic: The research topic the summary addresses.
+        summary: The summary text to critique.
+    """
+    user_text = (
+        f"Critique the following research summary on these four dimensions, "
+        f"each scored 0-10:\n"
+        f"1. Depth — how thorough is the coverage?\n"
+        f"2. Relevance — does it stay on topic?\n"
+        f"3. Clarity — is it well-written and easy to follow?\n"
+        f"4. Coverage — are all important aspects addressed?\n\n"
+        f"Topic: {topic}\n\n"
+        f"Summary:\n{summary}\n\n"
+        f"List specific weaknesses and actionable improvement suggestions."
+    )
+    return [
+        PromptMessage(role="user", content=TextContent(type="text", text=user_text)),
+    ]
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
