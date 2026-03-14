@@ -105,6 +105,22 @@ export function useResearch() {
           if (event.type === "progress") {
             const detected = detectStep(event.message as string);
             if (detected) setStep(detected);
+          } else if (event.type === "synthesis_start") {
+            setStep("synthesising");
+            // Clear content so improvement iterations start fresh
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId ? { ...m, content: "" } : m
+              )
+            );
+          } else if (event.type === "synthesis_token") {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId
+                  ? { ...m, content: m.content + (event.text as string) }
+                  : m
+              )
+            );
           } else if (event.type === "result") {
             const result: ResearchResult = {
               summary: event.summary as string,
@@ -114,11 +130,10 @@ export function useResearch() {
               citations: (event.sources as ResearchResult["citations"]) ?? [],
               research_id: (event.research_id as string) ?? "",
             };
+            // Attach metadata; keep streamed content already in place
             setMessages((prev) =>
               prev.map((m) =>
-                m.id === assistantId
-                  ? { ...m, content: result.summary, result }
-                  : m
+                m.id === assistantId ? { ...m, result } : m
               )
             );
             setStatus("done");
