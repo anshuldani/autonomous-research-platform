@@ -335,35 +335,19 @@ The unit tests mock all external APIs and run without any API keys.
 
 ---
 
-## Key learnings
+## Engineering decisions
 
-### Multi-agent architecture
-- Breaking a complex pipeline into **small, single-responsibility agents** (plan → search → synthesise → score → critique) makes each step independently testable and replaceable. The quality scorer doesn't need to know how synthesis works.
-- **Model tiering** matters: using Haiku for structured, deterministic tasks (planning, critique) and Sonnet only for open-ended generation cuts latency and cost significantly without hurting output quality.
+**Single-responsibility agents over monolithic pipeline.** Each step (plan, search, synthesise, score, critique) is an independent module with no knowledge of the others. This made the quality scorer trivially replaceable and let me test each stage in isolation with mocked dependencies.
 
-### Retrieval-Augmented Generation (RAG)
-- **Chunking strategy** has a bigger impact on retrieval quality than embedding model choice. Overlapping chunks with a consistent size prevent context being split at awkward boundaries.
-- **Hybrid search** (dense vector + sparse keyword) consistently outperforms pure semantic search on factual queries where exact terms matter.
-- **Reranking** (Cohere) as a final pass over retrieved chunks noticeably improves the coherence of follow-up answers — it's a cheap quality boost worth adding.
-- Storing embeddings in Pinecone **in a background thread** during research means the vector index is ready by the time the user asks their first follow-up question.
+**Model tiering for cost and latency.** Haiku handles all structured, deterministic tasks — planning and critique — where speed matters more than reasoning depth. Sonnet handles synthesis and scoring where output quality is load-bearing. This roughly halves per-request cost without a noticeable quality drop.
 
-### Streaming and perceived performance
-- The biggest UX win wasn't making the pipeline faster — it was **streaming progress updates** to the user so the 30–90 second wait felt active rather than frozen. Real latency and perceived latency are very different problems.
-- SSE (Server-Sent Events) is significantly simpler than WebSockets for one-way server-to-client streaming. It works natively in browsers, survives proxy timeouts with keepalive pings, and needs no special infrastructure.
-- The **"washing machine" UX principle**: users tolerate slow processes when they can see meaningful progress. Showing step names and timings (planning: 1.4s, searching: 3.2s…) is more reassuring than a generic spinner.
+**Chunking strategy beats embedding model choice for RAG quality.** Overlapping fixed-size chunks with consistent boundaries outperform sentence-splitting approaches for this use case, where queries land mid-topic. The embedding model barely moved the needle once chunk boundaries were fixed.
 
-### API design and cost
-- Parallelising web searches increases throughput but scales cost **linearly** — N parallel searches = N× API spend. For a production system, staying sequential unless there's a hard latency requirement is the operationally safer default.
-- **Never bake runtime config into build artefacts.** The `BACKEND_URL` must be resolved at request time (via `process.env` in a route handler), not at `next build` time — otherwise every environment change requires a redeploy.
+**Hybrid search + reranking as the retrieval stack.** Dense vector search alone misses factual queries with exact-term dependencies. Adding sparse keyword matching (tunable alpha) and a Cohere reranker as a final pass produces consistently better follow-up answers. The reranker is an optional dependency — disabling it degrades quality but doesn't break anything.
 
-### Deployment
-- FastAPI + Railway + Vercel is a clean separation: Railway handles the long-running Python process (with SSE keepalive), Vercel handles the static Next.js frontend. The only connection between them is the `BACKEND_URL` env var.
-- CORS must explicitly allow the production Vercel origin — `*` doesn't work with credentialed requests, and missing this causes silent failures that look like backend errors.
-- Vercel's hobby plan has a **300-second function timeout** — critical for SSE endpoints that can run 90+ seconds per research job.
+**SSE over WebSockets for streaming.** SSE is simpler, works natively in browsers without special infrastructure, and survives proxy timeouts with keepalive pings. The only limitation — no client-to-server streaming — isn't needed here. For one-way server push, WebSockets add complexity with no benefit.
 
-### Testing strategy
-- Mocking at the API-client level (patching `anthropic.Anthropic`, `TavilyClient`, etc.) gives fast, reliable unit tests with no API keys required. Integration tests with real APIs are reserved for pre-deploy smoke tests.
-- 10 unit tests covering the research loop and tool wrappers caught multiple regressions during refactoring at zero cost.
+**Background embedding during synthesis.** Pinecone is populated while the synthesis LLM writes the report, not after it completes. The vector index is ready before the user finishes reading — no perceptible lag before the first follow-up question.
 
 ---
 
