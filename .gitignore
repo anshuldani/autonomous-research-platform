@@ -1,10 +1,13 @@
 # Python
 backend/venv/
 backend/.env
+mcp_server/venv/
+mcp_server/.env
 **/__pycache__/
 **/*.pyc
 **/*.pyo
 backend/.pytest_cache/
+mcp_server/.pytest_cache/
 backend/.day4-complete
 *.egg-info/
 
