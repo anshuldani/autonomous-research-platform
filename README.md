@@ -8,6 +8,18 @@ When research finishes, the full source set is embedded and stored in Pinecone. 
 
 ---
 
+## Why this is hard
+
+Getting a research agent to produce a genuinely useful report — not just a padded summary — requires solving three separate problems at once.
+
+**Quality control without ground truth.** There's no reference answer to compare against. The solution here is a Claude-based quality scorer that evaluates depth, relevance, clarity, and coverage independently (0–10 each), then feeds low scores back into a critique agent that generates specific follow-up questions. This loop converges in 1–2 iterations on most topics without manual intervention.
+
+**RAG retrieval that actually works.** Pure semantic search fails on factual queries where exact terms matter — "what was the ROIC in Q3" retrieves irrelevant chunks if the query and the chunk use different phrasing. The fix is hybrid search: dense vector similarity plus sparse keyword matching with a tunable alpha, plus a Cohere reranker as a final pass. Each piece contributes independently; together they make follow-up answers meaningfully better.
+
+**Streaming a 30–90 second pipeline.** The user can't stare at a spinner for 90 seconds. Server-Sent Events stream progress updates at each pipeline step (planning: 1.4s, searching: 3.2s…). Pinecone embedding runs in a background thread during synthesis so the vector index is ready before the user finishes reading the report.
+
+---
+
 ## How it works
 
 ```
