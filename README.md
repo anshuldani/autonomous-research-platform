@@ -237,7 +237,7 @@ autonomous-research-platform/
 ├── backend/
 │   ├── main.py                     # FastAPI server — /api/research and /api/chat SSE endpoints
 │   ├── iterative_research.py       # Core research loop (plan → search → synthesise → score → refine)
-│   ├── day3_advanced_rag_agent.py  # Planning agent (Haiku) — generates 3 research questions
+│   ├── planning_agent.py           # Planning agent (Haiku) — generates 3 targeted research questions
 │   ├── research_tools.py           # Tavily web search wrapper
 │   ├── vector_store.py             # Pinecone + Voyage AI — chunk, embed, store, hybrid search
 │   ├── quality_scorer.py           # Claude-based quality scoring (0–10 across 4 dimensions)
