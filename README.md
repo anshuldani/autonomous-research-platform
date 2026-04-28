@@ -1,8 +1,8 @@
 # Autonomous Research Platform
 
-An AI agent that takes a research topic, searches the live web, builds a private vector knowledge base, writes a structured report, self-critiques it, and iteratively improves the quality — all fully automated.
+Give it a topic. In 30–90 seconds it plans targeted search queries, searches the live web in parallel, synthesises a 600+ word structured report, scores the quality on four dimensions, and self-critiques and reruns if the score is below threshold — all without any human input.
 
-After research completes you can ask unlimited follow-up questions answered by Claude grounded in the stored knowledge base via RAG.
+When research finishes, the full source set is embedded and stored in Pinecone. You can then ask follow-up questions answered directly from that knowledge base via RAG.
 
 **Live demo:** [autonomous-research-platform.vercel.app](https://autonomous-research-platform.vercel.app)
 
