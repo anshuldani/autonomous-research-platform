@@ -368,6 +368,12 @@ Quality scores above 7.5 are delivered immediately. Topics with ambiguous scope 
 
 ## Notes
 
-- **Pinecone index**: must be created manually before first run. Name: `research-platform`, dimensions: `1024`, metric: `cosine`, cloud: any serverless region.
-- **Follow-up chat context**: Pinecone is populated in a background thread during research. If you ask a follow-up question immediately after research completes, the first answer may have limited context — wait a few seconds.
-- **Quality threshold**: the pipeline retries until the score meets the threshold or `max_iterations` is exhausted. Lowering the threshold (e.g. `6.0`) speeds up delivery; raising it (e.g. `9.0`) forces more refinement passes.
+**Pinecone index setup** — must be created before first run:
+```
+Name: research-platform | Dimensions: 1024 | Metric: cosine | Type: Serverless
+```
+Create it in the Pinecone console or via the API. Any serverless region works.
+
+**Follow-up chat timing** — Pinecone is populated in a background thread during synthesis. If you ask a follow-up within the first 2–3 seconds after the report appears, the first answer may have limited context. Wait for the "Indexed N chunks" status message.
+
+**Quality threshold tuning** — default is 7.5. Set lower (e.g. `6.0`) for faster delivery on broad topics; set higher (e.g. `9.0`) to force multiple refinement passes. Pass as `quality_threshold` in the API request body.
