@@ -8,7 +8,7 @@ import uuid
 
 def test_advanced_rag_hybrid_search():
     """Test advanced RAG uses hybrid search."""
-    from day3_advanced_rag_agent import advanced_rag_synthesis_agent
+    from planning_agent import advanced_rag_synthesis_agent
     from vector_store import VectorStore
 
     state = {
@@ -37,8 +37,8 @@ def test_advanced_rag_hybrid_search():
     mock_claude = Mock()
     mock_claude.content = [Mock(text="Summary here")]
 
-    with patch('day3_advanced_rag_agent.vector_store.hybrid_search', return_value=mock_hybrid_results):
-        with patch('day3_advanced_rag_agent.client.messages.create', return_value=mock_claude):
+    with patch('planning_agent.vector_store.hybrid_search', return_value=mock_hybrid_results):
+        with patch('planning_agent.client.messages.create', return_value=mock_claude):
             result = advanced_rag_synthesis_agent(state)
 
             assert result['retrieval_method'] == 'hybrid+rerank'
