@@ -31,10 +31,11 @@ def test_research_tools_init_missing_key():
         assert "TAVILY_API_KEY not found" in str(exc_info.value)
 
 
+@patch.dict(os.environ, {'TAVILY_API_KEY': 'test_key'})
 def test_search_web_success():
     """Test successful web search returns formatted results."""
     from research_tools import ResearchTools
-    
+
     # Mock Tavily response
     mock_response = {
         'results': [
@@ -71,10 +72,11 @@ def test_search_web_success():
     tools.tavily.search.assert_called_once()
 
 
+@patch.dict(os.environ, {'TAVILY_API_KEY': 'test_key'})
 def test_search_web_api_error():
     """Test search_web handles API errors gracefully."""
     from research_tools import ResearchTools
-    
+
     tools = ResearchTools()
     
     # Mock API to raise an exception
@@ -87,10 +89,11 @@ def test_search_web_api_error():
     assert isinstance(results, list)
 
 
+@patch.dict(os.environ, {'TAVILY_API_KEY': 'test_key'})
 def test_search_web_empty_results():
     """Test search_web handles empty results from API."""
     from research_tools import ResearchTools
-    
+
     tools = ResearchTools()
     
     # Mock empty response
