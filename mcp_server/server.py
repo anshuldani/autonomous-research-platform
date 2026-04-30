@@ -113,7 +113,7 @@ async def run_research(
         on_synthesis_token=on_token,
     )
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     try:
         with redirect_stdout_to_stderr():
             state = await loop.run_in_executor(None, fn)
@@ -172,7 +172,7 @@ async def search_research(
     top_k = min(top_k, 20)
     log(f"search_research — research_id={research_id}, query={query!r}, top_k={top_k}")
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     try:
         vs = get_vector_store()
         results = await loop.run_in_executor(
@@ -231,7 +231,7 @@ async def hybrid_search_research(
     alpha = max(0.0, min(1.0, alpha))
     log(f"hybrid_search — research_id={research_id}, alpha={alpha}, top_k={top_k}")
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     try:
         vs = get_vector_store()
         results = await loop.run_in_executor(
@@ -303,7 +303,7 @@ async def score_research(
         sources_count=sources_count,
     )
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     try:
         with redirect_stdout_to_stderr():
             scores = await loop.run_in_executor(None, fn)
@@ -380,7 +380,7 @@ async def get_session_stats(research_id: str) -> str:
     index_total = None
     try:
         vs = get_vector_store()
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         stats = await loop.run_in_executor(None, vs.get_index_stats)
         index_total = stats.get("total_vector_count") if isinstance(stats, dict) else None
     except Exception as exc:
