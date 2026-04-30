@@ -221,7 +221,7 @@ async def generate_chat(request: ChatRequest) -> AsyncGenerator:
 
     # Retrieve RAG context in a thread (Pinecone calls are blocking)
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         context = await loop.run_in_executor(
             None,
             retrieve_chat_context,
