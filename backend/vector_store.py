@@ -196,7 +196,7 @@ class VectorStore:
                     'research_id': research_id,
                     'chunk_index': i,
                     'total_chunks': len(chunks),
-                    'text': chunk[:200]
+                    'text': chunk[:1500]
                 })
                 all_metadata.append(chunk_meta)
 
