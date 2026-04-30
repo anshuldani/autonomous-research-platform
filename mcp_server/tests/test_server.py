@@ -38,7 +38,7 @@ _make_stub("research_tools", ResearchTools=MagicMock())
 _make_stub("vector_store", VectorStore=MagicMock())
 _make_stub("quality_scorer", score_research_quality=MagicMock(), _extract_json=MagicMock())
 _make_stub("critique_agent", critique_research=MagicMock())
-_make_stub("day3_advanced_rag_agent", planning_agent=MagicMock(), AdvancedResearchState=dict)
+_make_stub("planning_agent", planning_agent=MagicMock(), AdvancedResearchState=dict)
 
 from mcp_server import session_store
 
