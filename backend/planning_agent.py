@@ -1,14 +1,9 @@
 """
-DAY 3: Advanced RAG Research Agent
-===================================
+Advanced RAG Research Agent
+============================
 
-ENHANCEMENTS OVER BASIC RAG:
-- Hybrid search (semantic + keyword)
-- Reranking with Cohere for precision
-- Metadata filtering for quality
-- Batch processing for scale
-
-This represents production-grade RAG implementation.
+Production-grade RAG with hybrid search, Cohere reranking, and
+LangGraph workflow orchestration.
 """
 
 from anthropic import Anthropic
@@ -24,14 +19,9 @@ from vector_store import VectorStore
 
 load_dotenv()
 
-print("Initializing Advanced RAG Agent...")
 client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 tools = ResearchTools()
 vector_store = VectorStore()
-print("✅ All clients ready (Advanced RAG mode!)\n")
-
-
-# State definition will be added next
 
 
 # ============================================================================
@@ -52,15 +42,12 @@ class AdvancedResearchState(TypedDict):
     research_questions: List[str]
     search_results: Dict[str, List[Dict]]
     stored_chunks: int
-    retrieval_method: str  # NEW: "hybrid" or "semantic"
+    retrieval_method: str
     rag_context: str
-    rerank_scores: List[float]  # NEW: Reranking scores
-    quality_metrics: Dict  # NEW: Quality assessment
+    rerank_scores: List[float]
+    quality_metrics: Dict
     summary: str
     current_step: str
-
-
-# Agents will be added next
 
 
 # ============================================================================
@@ -164,11 +151,9 @@ def research_agent(state: AdvancedResearchState) -> AdvancedResearchState:
     return state
 
 
-# Advanced synthesis agent will be added next
-
 
 # ============================================================================
-# AGENT 3: ADVANCED RAG SYNTHESIS (NEW: Hybrid + Reranking)
+# AGENT 3: ADVANCED RAG SYNTHESIS
 # ============================================================================
 
 def advanced_rag_synthesis_agent(state: AdvancedResearchState) -> AdvancedResearchState:
@@ -291,8 +276,6 @@ Requirements:
     
     return state
 
-
-# Workflow will be added next
 
 
 # ============================================================================

@@ -32,9 +32,6 @@ class CritiqueResult(TypedDict):
     improvement_areas: List[str]
 
 
-# Critique function will be added next
-
-
 def critique_research(
     topic: str,
     questions: List[str],
