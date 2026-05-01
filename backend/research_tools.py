@@ -62,8 +62,6 @@ class ResearchTools:
         
         # Initialize Tavily client
         self.tavily = TavilyClient(api_key=api_key)
-        
-        print("✅ ResearchTools initialized")
     
     
     def _format_search_result(self, item: Dict) -> Dict:
