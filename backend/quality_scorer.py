@@ -185,8 +185,6 @@ Return ONLY a JSON object:
 
 
 if __name__ == "__main__":
-    """Test the quality scorer"""
-    
     print("\n" + "="*60)
     print("TESTING QUALITY SCORER")
     print("="*60 + "\n")
