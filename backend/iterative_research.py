@@ -296,7 +296,8 @@ def run_improvement_iteration(state, on_token=None):
 
     print("🎯 Addressing gaps:")
     for i, q in enumerate(new_questions, 1):
-        print(f"  {i}. {q[:70]}...")
+        truncated = q[:70] + ("..." if len(q) > 70 else "")
+        print(f"  {i}. {truncated}")
     print()
 
     state = research_with_delay(state, new_questions)
