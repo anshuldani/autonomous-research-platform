@@ -55,7 +55,7 @@ class AdvancedResearchState(TypedDict):
 # ============================================================================
 
 def planning_agent(state: AdvancedResearchState) -> AdvancedResearchState:
-    """Generate research questions (unchanged)"""
+    """Generate research questions for the given topic."""
     
     print("\n" + "="*60)
     print("STEP 1: PLANNING")
