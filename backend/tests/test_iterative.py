@@ -1,6 +1,7 @@
 """
 Tests for Iterative Research Agent
 """
+import inspect
 import pytest
 from unittest.mock import Mock, patch
 
@@ -66,7 +67,7 @@ def test_critique_agent_below_threshold():
                 quality_threshold=8.0
             )
             
-            assert result['needs_improvement'] == True
+            assert result['needs_improvement']
             assert len(result['followup_questions']) == 2
             assert len(result['improvement_areas']) == 2
 
@@ -95,7 +96,7 @@ def test_critique_agent_above_threshold():
             quality_threshold=8.0
         )
         
-        assert result['needs_improvement'] == False
+        assert not result['needs_improvement']
         assert result['followup_questions'] == []
 
 
@@ -140,7 +141,6 @@ def test_iterative_research_respects_max_iterations():
     from iterative_research import run_iterative_research
     
     # Function should accept these parameters
-    import inspect
     sig = inspect.signature(run_iterative_research)
     assert 'topic' in sig.parameters
     assert 'quality_threshold' in sig.parameters
