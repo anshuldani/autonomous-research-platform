@@ -23,14 +23,25 @@ load_dotenv()
 client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 
-def _extract_json(text: str) -> dict:
-    """
-    Robustly extract a JSON object from a Claude response.
+_FALLBACK_SCORES: Dict = {
+    "overall_score": 5.0,
+    "depth_score": 5.0,
+    "relevance_score": 5.0,
+    "clarity_score": 5.0,
+    "coverage_score": 5.0,
+    "weaknesses": ["Could not parse quality assessment"],
+    "suggestions": ["Re-run scoring"],
+}
 
-    Handles:
-    - Markdown code fences (```json ... ```)
-    - Extra prose before/after the JSON block
-    - Literal newlines embedded inside string values (invalid JSON)
+
+def _extract_json(text: str) -> Dict:
+    """Robustly extract a JSON object from a Claude response.
+
+    Handles markdown code fences, prose before/after the JSON, and
+    literal newlines inside string values. If no JSON block is present
+    at all (e.g. Claude refuses or returns plain prose), returns
+    ``_FALLBACK_SCORES`` so the caller's iteration loop keeps running
+    instead of raising.
     """
     # Strip code fences
     if "```json" in text:
@@ -41,7 +52,8 @@ def _extract_json(text: str) -> dict:
     # Find the outermost { ... } via brace counting
     start = text.find("{")
     if start == -1:
-        raise ValueError("No JSON object found in response")
+        print("⚠️  No JSON object in response — using fallback scores")
+        return dict(_FALLBACK_SCORES)
 
     depth = 0
     end = start
@@ -73,15 +85,7 @@ def _extract_json(text: str) -> dict:
 
     # Fallback: return neutral scores so the pipeline keeps running
     print("⚠️  JSON parse failed — using fallback scores")
-    return {
-        "overall_score": 5.0,
-        "depth_score": 5.0,
-        "relevance_score": 5.0,
-        "clarity_score": 5.0,
-        "coverage_score": 5.0,
-        "weaknesses": ["Could not parse quality assessment"],
-        "suggestions": ["Re-run scoring"],
-    }
+    return dict(_FALLBACK_SCORES)
 
 
 def score_research_quality(
