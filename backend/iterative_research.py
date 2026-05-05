@@ -5,14 +5,15 @@ Iterative Research Agent
 Strategy: Incremental improvement via self-critique loop.
 """
 
-from typing import TypedDict, List, Dict
-from anthropic import Anthropic
 import os
-from dotenv import load_dotenv
-import uuid
-import time
 import threading
+import time
+import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Callable, Dict, List, Optional, TypedDict
+
+from anthropic import Anthropic
+from dotenv import load_dotenv
 
 from research_tools import ResearchTools
 from vector_store import VectorStore
@@ -50,7 +51,10 @@ class IterativeResearchState(TypedDict):
     sources: List[Dict]
 
 
-def research_with_delay(state, questions):
+TokenCallback = Callable[[str], None]
+
+
+def research_with_delay(state: "IterativeResearchState", questions: List[str]) -> "IterativeResearchState":
     """Parallel web search. Returns raw results immediately; stores in Pinecone in background."""
 
     def fetch(question):
@@ -116,8 +120,15 @@ def research_with_delay(state, questions):
     return state
 
 
-def smart_synthesis(state, is_improvement=False, on_token=None):
-    """Smart synthesis that builds on previous work."""
+def smart_synthesis(
+    state: "IterativeResearchState",
+    is_improvement: bool = False,
+    on_token: Optional[TokenCallback] = None,
+) -> "IterativeResearchState":
+    """Synthesize a report. On the first pass writes from scratch; on
+    subsequent passes rewrites the previous summary using critique
+    feedback. Streams tokens to ``on_token`` if provided.
+    """
 
     if is_improvement:
         new_questions = state['current_critique']['followup_questions']
@@ -214,8 +225,11 @@ No bullet points."""
     return state
 
 
-def run_initial_research(state, on_token=None):
-    """Initial research."""
+def run_initial_research(
+    state: "IterativeResearchState",
+    on_token: Optional[TokenCallback] = None,
+) -> "IterativeResearchState":
+    """Run iteration 1: planning → parallel search → synthesis."""
 
     print(f"\n{'='*70}")
     print(f"ITERATION 1: INITIAL RESEARCH")
@@ -236,8 +250,10 @@ def run_initial_research(state, on_token=None):
     return state
 
 
-def critique_and_decide(state):
-    """Critique current work."""
+def critique_and_decide(state: "IterativeResearchState") -> "IterativeResearchState":
+    """Score the current summary, decide whether another iteration is needed,
+    and append follow-up questions to ``state['research_questions']`` if so.
+    """
 
     print(f"\n{'='*70}")
     print(f"CRITIQUE: Iteration {state['iteration']}")
@@ -282,8 +298,11 @@ def critique_and_decide(state):
     return state
 
 
-def run_improvement_iteration(state, on_token=None):
-    """Run improvement iteration."""
+def run_improvement_iteration(
+    state: "IterativeResearchState",
+    on_token: Optional[TokenCallback] = None,
+) -> "IterativeResearchState":
+    """Run a follow-up iteration that targets the gaps surfaced by critique."""
 
     state['previous_summary'] = state['summary']
     state['iteration'] += 1
@@ -310,9 +329,11 @@ def run_iterative_research(
     topic: str,
     quality_threshold: float = 7.5,
     max_iterations: int = 3,
-    on_synthesis_token=None,
-):
-    """Main loop."""
+    on_synthesis_token: Optional[TokenCallback] = None,
+) -> "IterativeResearchState":
+    """Main entry point — drive planning, search, synthesis, and critique
+    until the quality threshold is hit or ``max_iterations`` is reached.
+    """
 
     print(f"\n{'='*70}")
     print("🚀 ITERATIVE RESEARCH (SMART INCREMENTAL)")
