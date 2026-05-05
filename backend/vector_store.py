@@ -45,13 +45,8 @@ class VectorStore:
         index: Connected Pinecone index
     """
 
-    def __init__(self, index_name: str = "research-platform"):
-        """
-        Initialize vector store with Pinecone and Voyage AI.
-
-        Args:
-            index_name: Name of Pinecone index to use
-        """
+    def __init__(self, index_name: str = "research-platform") -> None:
+        """Initialize vector store with Pinecone and Voyage AI clients."""
         print("Initializing VectorStore...")
 
         self.index_name = index_name
@@ -73,12 +68,12 @@ class VectorStore:
 
         print("✅ VectorStore initialized")
 
-    def _setup_index(self):
-        """
-        Create Pinecone index if it doesn't exist.
+    def _setup_index(self) -> None:
+        """Create the Pinecone index if missing and connect ``self.index``.
 
-        Creates a serverless index optimized for cosine similarity.
-        Waits for index to be ready before proceeding.
+        Index is serverless on AWS us-east-1, cosine similarity, with the
+        dimension declared in ``self.dimension`` (1024 for Voyage-3).
+        Blocks until the index reports ``ready``.
         """
         existing_indexes = [idx.name for idx in self.pc.list_indexes()]
 
@@ -165,16 +160,15 @@ class VectorStore:
         texts: List[str],
         metadata: List[Dict],
         research_id: str,
-        auto_chunk: bool = True
-    ):
-        """
-        Store documents in vector database with embeddings.
+        auto_chunk: bool = True,
+    ) -> None:
+        """Store documents in Pinecone with Voyage embeddings.
 
-        Args:
-            texts: List of document texts to store
-            metadata: List of metadata dicts (one per text)
-            research_id: ID to group related documents
-            auto_chunk: Whether to automatically chunk long texts
+        ``metadata`` must be the same length as ``texts``. When
+        ``auto_chunk`` is True, texts longer than 500 words are split via
+        ``chunk_text`` before embedding; metadata is duplicated per chunk
+        with ``chunk_index`` / ``total_chunks`` fields and the first
+        1500 chars of the chunk text echoed under ``"text"``.
         """
         print(f"📦 Storing {len(texts)} documents...")
 
@@ -221,17 +215,10 @@ class VectorStore:
         texts: List[str],
         metadata: List[Dict],
         research_id: str,
-        batch_size: int = 10
-    ):
-        """
-        Store large document sets in batches to avoid rate limits.
-
-        Args:
-            texts: Documents to store
-            metadata: Metadata for each document
-            research_id: Research session ID
-            batch_size: Number of documents per batch
-        """
+        batch_size: int = 10,
+    ) -> None:
+        """Wrap ``store_documents`` to batch large sets with a 1s sleep
+        between batches, avoiding Pinecone / Voyage rate limits."""
         total = len(texts)
         print(f"📦 Batch storing {total} documents (batch_size={batch_size})...")
 
