@@ -19,7 +19,7 @@ uvicorn main:app --reload --port 8000
 |---|---|
 | `main.py` | FastAPI app — `/api/research` and `/api/chat` SSE endpoints |
 | `iterative_research.py` | Core research loop |
-| `day3_advanced_rag_agent.py` | Planning agent |
+| `planning_agent.py` | Planning agent — generates targeted research questions |
 | `research_tools.py` | Tavily web search |
 | `vector_store.py` | Pinecone + Voyage AI |
 | `quality_scorer.py` | Claude-based quality scoring |
