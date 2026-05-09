@@ -13,12 +13,13 @@ Mirrors the pattern in backend/main.py's get_vector_store().
 import threading
 import sys
 import os
+from typing import Any, Optional
 
-_vs = None
+_vs: Optional[Any] = None
 _vs_lock = threading.Lock()
 
 
-def get_vector_store():
+def get_vector_store() -> Any:
     """Return the shared VectorStore instance, initialising it on first call."""
     global _vs
     if _vs is None:

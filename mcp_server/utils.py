@@ -12,6 +12,7 @@ Two critical concerns:
 import sys
 import contextlib
 from datetime import datetime
+from typing import Generator
 
 
 def log(msg: str) -> None:
@@ -33,7 +34,7 @@ class _StderrWriter:
 
 
 @contextlib.contextmanager
-def redirect_stdout_to_stderr():
+def redirect_stdout_to_stderr() -> Generator[None, None, None]:
     """
     Context manager that routes all stdout from backend code to stderr.
 
