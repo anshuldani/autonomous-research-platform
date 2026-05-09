@@ -7,7 +7,7 @@ LangGraph workflow orchestration.
 """
 
 from anthropic import Anthropic
-from typing import TypedDict, List, Dict
+from typing import Any, TypedDict, List, Dict
 from langgraph.graph import StateGraph, END
 import os
 from dotenv import load_dotenv
@@ -282,7 +282,7 @@ Requirements:
 # WORKFLOW
 # ============================================================================
 
-def create_advanced_rag_workflow():
+def create_advanced_rag_workflow() -> Any:
     """Build advanced RAG workflow with quality tracking"""
     
     print("🏗️  Building advanced RAG workflow...")
@@ -306,7 +306,7 @@ def create_advanced_rag_workflow():
     return app
 
 
-def run_advanced_research(topic: str):
+def run_advanced_research(topic: str) -> AdvancedResearchState:
     """Execute advanced RAG research"""
     
     print("\n" + "="*60)
